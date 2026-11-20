@@ -2,10 +2,21 @@
  * API client connecting frontend to illusion AI backend.
  */
 
-const API_BASE = (
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://illusion-ai-using-rag.onrender.com/api/v1"
-).replace(/\/+$/, "");
+const getApiBase = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined") {
+    // In browser: check if local dev
+    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (isLocalhost) {
+      return "http://localhost:8000/api/v1";
+    }
+  }
+  return "https://illusion-ai-using-rag.onrender.com/api/v1";
+};
+
+const API_BASE = getApiBase();
 const API_HEALTH_URL = `${API_BASE.replace(/\/api\/v1$/, "")}/health`;
 
 export interface Scheme {
@@ -61,6 +72,31 @@ export interface ChatSource {
   last_verified_at?: string;
 }
 
+export interface ToolParameter {
+  name: string;
+  type: string;
+  description: string;
+  required: boolean;
+  default?: any;
+}
+
+export interface ToolDefinition {
+  name: string;
+  display_name: string;
+  description: string;
+  parameters: ToolParameter[];
+  category: string;
+  requires_auth: boolean;
+  is_available: boolean;
+}
+
+export interface ExecutedTool {
+  tool_name: string;
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
 export interface ChatResponse {
   answer: string;
   language: string;
@@ -70,6 +106,8 @@ export interface ChatResponse {
   matched_schemes: Scheme[];
   disclaimer: string;
   conversation_id?: string;
+  executed_tools?: ExecutedTool[];
+  tool_mode_used?: string;
 }
 
 export const api = {
@@ -146,14 +184,174 @@ export const api = {
     return res.json();
   },
 
-  // Chat
-  async sendChatMessage(question: string, language: string = "en", profile?: any): Promise<ChatResponse> {
+  // Chat with Hybrid Tool System
+  async sendChatMessage(
+    question: string,
+    language: string = "en",
+    profile?: any,
+    tool_mode: "auto" | "manual" | "hybrid" = "auto",
+    selected_tools?: string[],
+    tool_args?: Record<string, any>
+  ): Promise<ChatResponse> {
     const res = await fetch(`${API_BASE}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question, language, profile }),
+      body: JSON.stringify({
+        question,
+        language,
+        profile,
+        tool_mode,
+        selected_tools,
+        tool_args,
+      }),
     });
     if (!res.ok) throw new Error("Chat request failed");
     return res.json();
   },
+
+  // AI Tools Catalogue & Direct Execution
+  async listTools(): Promise<ToolDefinition[]> {
+    const res = await fetch(`${API_BASE}/tools/`);
+    if (!res.ok) throw new Error("Failed to fetch available tools");
+    return res.json();
+  },
+
+  async executeToolDirect(tool_name: string, arguments_payload: Record<string, any> = {}): Promise<any> {
+    const res = await fetch(`${API_BASE}/tools/execute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tool_name,
+        arguments: arguments_payload,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Tool execution failed");
+    }
+    return res.json();
+  },
+
+  async uploadToolDocument(file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_BASE}/tools/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "File extraction failed");
+    }
+    return res.json();
+  },
+
+  // Authentication & Google OAuth Endpoints
+  async getGoogleAuthUrl(): Promise<{ authorization_url: string; client_id_configured: boolean }> {
+    const res = await fetch(`${API_BASE}/auth/google/url`);
+    if (!res.ok) throw new Error("Failed to get Google auth URL");
+    return res.json();
+  },
+
+  async exchangeGoogleCode(code: string, redirect_uri?: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/google/callback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, redirect_uri }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to exchange Google OAuth code");
+    }
+    return res.json();
+  },
+
+  async getCurrentUser(token: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Unauthorized or invalid token");
+    return res.json();
+  },
+
+  async refreshToken(refreshTokenStr: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshTokenStr }),
+    });
+    if (!res.ok) throw new Error("Failed to refresh token");
+    return res.json();
+  },
+
+  async logoutUser(token: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json().catch(() => ({}));
+  },
+
+  async registerWithPassword(data: { email: string; username: string; password: string; full_name?: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Registration failed. Please check inputs.");
+    }
+    return res.json();
+  },
+
+  async loginWithPassword(data: { username_or_email: string; password: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Invalid username/email or password.");
+    }
+    return res.json();
+  },
+
+  async forgotPassword(email: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to initiate password reset.");
+    }
+    return res.json();
+  },
+
+  async resetPassword(data: { token: string; new_password: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to reset password.");
+    }
+    return res.json();
+  },
 };
+
+// Export standalone helper functions for easy import
+export const getGoogleAuthUrl = api.getGoogleAuthUrl.bind(api);
+export const exchangeGoogleCode = api.exchangeGoogleCode.bind(api);
+export const getCurrentUser = api.getCurrentUser.bind(api);
+export const refreshToken = api.refreshToken.bind(api);
+export const logoutUser = api.logoutUser.bind(api);
+export const registerWithPassword = api.registerWithPassword.bind(api);
+export const loginWithPassword = api.loginWithPassword.bind(api);
+export const forgotPassword = api.forgotPassword.bind(api);
+export const resetPassword = api.resetPassword.bind(api);

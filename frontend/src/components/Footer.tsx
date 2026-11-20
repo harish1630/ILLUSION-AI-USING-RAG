@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
-import { Sparkles, ExternalLink, ShieldCheck, AlertCircle } from "lucide-react";
+import { Sparkles, ExternalLink, ShieldCheck, AlertCircle, Wrench } from "lucide-react";
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -17,102 +17,105 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-12 pb-8 border-t border-slate-800">
+    <footer className="bg-[#0D0D0E] text-zinc-300 pt-12 pb-8 border-t border-[#24242A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Official Sources Bar */}
-        <div className="bg-slate-800/80 rounded-2xl p-6 border border-slate-700/60 mb-10">
-          <div className="flex items-center gap-2 mb-3 text-teal-400 font-semibold text-sm">
-            <ShieldCheck className="w-5 h-5 text-teal-400" />
+        <div className="bg-[#151518] rounded-xl p-5 border border-[#2E2E36] mb-8">
+          <div className="flex items-center gap-2 mb-2 text-amber-400 font-semibold text-xs tracking-wider uppercase">
+            <ShieldCheck className="w-4 h-4 text-amber-400" />
             <span>{t.trust.title}</span>
           </div>
-          <p className="text-xs text-slate-400 mb-4">{t.trust.description}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <p className="text-xs text-zinc-400 mb-3">{t.trust.description}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
             {officialPortals.map((portal) => (
               <a
                 key={portal.url}
                 href={portal.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-teal-500/50 text-xs text-slate-300 hover:text-white transition-all group"
+                className="flex items-center justify-between p-2 rounded-md bg-[#1C1C20] hover:bg-[#24242A] border border-[#2E2E36] hover:border-amber-500/40 text-xs text-zinc-300 hover:text-white transition-all group"
               >
-                <span className="truncate">{portal.name}</span>
-                <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-teal-400 shrink-0 ml-2" />
+                <span className="truncate text-[11px] font-medium">{portal.name}</span>
+                <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-amber-400 shrink-0 ml-1.5" />
               </a>
             ))}
           </div>
         </div>
 
         {/* Legal Disclaimer Box */}
-        <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 mb-10 text-amber-200/90 text-xs flex gap-3 items-start">
+        <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3.5 mb-8 text-amber-200/90 text-xs flex gap-2.5 items-start">
           <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <p className="leading-relaxed">{t.disclaimer}</p>
+          <p className="leading-relaxed text-[11px] text-zinc-300">{t.disclaimer}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 text-xs">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-slate-950 font-bold">
-                <Sparkles className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-md bg-[#18181C] border border-[#2E2E36] flex items-center justify-center text-amber-400 font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
               </div>
-              <span className="text-lg font-bold text-white tracking-tight">
-                illusion <span className="text-teal-400">AI</span>
+              <span className="text-base font-bold text-white tracking-tight">
+                illusion <span className="text-amber-400">AI</span>
               </span>
             </div>
-            <p className="text-slate-400 text-xs max-w-sm leading-relaxed">
-              Simplifying the entrepreneurship journey for aspiring business founders in Tamil Nadu and India.
-              Automated scheme verification, actionable roadmaps, and bilingual AI assistance.
+            <p className="text-zinc-400 text-xs max-w-sm leading-relaxed">
+              Empowering first-time entrepreneurs in Tamil Nadu and India with automated scheme screening,
+              actionable business roadmaps, and hybrid AI tools.
             </p>
           </div>
 
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200 mb-3">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-200 mb-3">
               Platform
             </h4>
-            <ul className="space-y-2 text-xs text-slate-400">
+            <ul className="space-y-2 text-xs text-zinc-400">
               <li>
-                <Link href="/onboarding" className="hover:text-teal-400">
+                <Link href="/onboarding" className="hover:text-amber-400 transition-colors">
                   Business Onboarding
                 </Link>
               </li>
               <li>
-                <Link href="/schemes" className="hover:text-teal-400">
+                <Link href="/schemes" className="hover:text-amber-400 transition-colors">
                   Government Schemes
                 </Link>
               </li>
               <li>
-                <Link href="/chat" className="hover:text-teal-400">
-                  Bilingual AI Chatbot
+                <Link href="/tools" className="hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                  <span>AI Tools Studio</span>
+                  <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded border border-amber-500/30">
+                    Live
+                  </span>
                 </Link>
               </li>
               <li>
-                <Link href="/roadmap" className="hover:text-teal-400">
-                  Interactive Roadmap
+                <Link href="/chat" className="hover:text-amber-400 transition-colors">
+                  Bilingual AI Advisor
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200 mb-3">
-              Tamil Nadu Hubs
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-200 mb-3">
+              Tools Ecosystem
             </h4>
-            <ul className="space-y-2 text-xs text-slate-400">
-              <li>Chennai • Coimbatore • Madurai</li>
-              <li>Salem • Tiruchirappalli • Erode</li>
-              <li>Tiruppur • Vellore • Tirunelveli</li>
-              <li className="text-teal-400 pt-1">All 38 Districts Supported</li>
+            <ul className="space-y-1.5 text-xs text-zinc-400">
+              <li>Tavily Live Web Search</li>
+              <li>Gemini Vector RAG Search</li>
+              <li>Safe AST Math Calculator</li>
+              <li>PDF / DOCX Document Extractor</li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <div className="border-t border-[#24242A] pt-6 flex flex-col sm:flex-row justify-between items-center text-[11px] text-zinc-500 gap-4">
           <p>© {new Date().getFullYear()} illusion AI. {t.footer.rights}</p>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-400">Tamil & English Bilingual Engine</span>
+          <div className="flex gap-4">
+            <span className="hover:text-zinc-400 cursor-pointer">{t.footer.privacy}</span>
+            <span className="hover:text-zinc-400 cursor-pointer">{t.footer.terms}</span>
           </div>
         </div>
       </div>
     </footer>
   );
 }
-

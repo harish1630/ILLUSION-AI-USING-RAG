@@ -103,6 +103,23 @@ class DocumentChunkModel(Base):
     scheme = relationship("SchemeModel", back_populates="chunks")
 
 
+class UserModel(Base):
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    username = Column(String(100), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=True)  # Nullable for pure OAuth accounts
+    full_name = Column(String(255), nullable=True)
+    picture = Column(String(500), nullable=True)
+    google_id = Column(String(100), unique=True, nullable=True, index=True)
+    is_active = Column(Boolean, default=True)
+    reset_token = Column(String(255), nullable=True, index=True)
+    reset_token_expires_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
 class UserProfileModel(Base):
     __tablename__ = "user_profiles"
 

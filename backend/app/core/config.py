@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
     ]
@@ -43,15 +45,44 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: Optional[str] = Field(default=None, description="Google Gemini API key")
     GOOGLE_MODEL: str = Field(default="gemini-1.5-flash", description="Default Gemini model")
 
+    # Search & Tool Providers
+    TAVILY_API_KEY: Optional[str] = Field(default=None, description="Tavily Web Search API key")
+    MAX_UPLOAD_SIZE_BYTES: int = Field(default=15 * 1024 * 1024, description="Max upload size (15MB)")
+    ALLOWED_EXTENSIONS: List[str] = [".pdf", ".docx", ".txt"]
+
     # Embeddings
     EMBEDDING_MODEL: str = Field(
-        default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-        description="Configured multilingual embedding model identifier",
+        default="models/text-embedding-004",
+        description="Configured embedding model identifier (e.g. models/text-embedding-004 for Gemini)",
     )
     EMBEDDING_DIMENSION: int = Field(
-        default=384,
-        description="Dimension matching configured embedding model (e.g. 384 for MiniLM-L12, 768 for Gemini)",
+        default=768,
+        description="Dimension matching configured embedding model (e.g. 768 for Gemini text-embedding-004)",
     )
+
+    # Intelligent Router
+    ROUTER_MAX_STEPS: int = Field(default=5, description="Maximum tool execution steps per request")
+    ROUTER_TOOL_TIMEOUT: float = Field(default=15.0, description="Timeout in seconds for each tool execution")
+    MCP_DISCOVERY_ENABLED: bool = Field(default=False, description="Enable MCP server discovery (Phase 2)")
+
+    # Google OAuth & Authentication
+    GOOGLE_CLIENT_ID: Optional[str] = Field(default=None, description="Google OAuth 2.0 Client ID")
+    GOOGLE_CLIENT_SECRET: Optional[str] = Field(default=None, description="Google OAuth 2.0 Client Secret")
+    GOOGLE_REDIRECT_URI: str = Field(
+        default="http://localhost:8000/auth/google/callback",
+        description="Google OAuth 2.0 authorized redirect URI",
+    )
+    SESSION_SECRET: Optional[str] = Field(default=None, description="Session secret key")
+    TOKEN_ENCRYPTION_KEY: Optional[str] = Field(default=None, description="Fernet token encryption key")
+
+    # JWT Session Management
+    JWT_SECRET_KEY: str = Field(
+        default="illusion_ai_super_secret_jwt_key_2026_change_in_production",
+        description="Cryptographic secret key for signing JWT tokens",
+    )
+    JWT_ALGORITHM: str = Field(default="HS256", description="JWT cryptographic signature algorithm")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60, description="Access token expiration in minutes")
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, description="Refresh token expiration in days")
 
     @property
     def effective_database_url(self) -> Optional[str]:

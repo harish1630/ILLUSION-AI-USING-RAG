@@ -13,6 +13,9 @@ from app.routes.schemes import router as schemes_router
 from app.routes.business import router as business_router
 from app.routes.roadmap import router as roadmap_router
 from app.routes.chat import router as chat_router
+from app.routes.tools import router as tools_router
+from app.routes.router import router as intelligent_router
+from app.routes.auth import router as auth_router
 
 
 @asynccontextmanager
@@ -33,13 +36,15 @@ app = FastAPI(
 )
 
 # CORS configuration
-origins = [
+origins = list(set([
     settings.FRONTEND_URL,
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
-]
+]))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -57,6 +62,18 @@ app.include_router(schemes_router, prefix=settings.API_V1_PREFIX)
 app.include_router(business_router, prefix=settings.API_V1_PREFIX)
 app.include_router(roadmap_router, prefix=settings.API_V1_PREFIX)
 app.include_router(chat_router, prefix=settings.API_V1_PREFIX)
+app.include_router(tools_router, prefix=settings.API_V1_PREFIX)
+app.include_router(intelligent_router, prefix=settings.API_V1_PREFIX)
+app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
+
+# Root and direct auth routes (matching http://localhost:8000/auth/google/callback)
+app.include_router(auth_router)
+
+# Also expose direct /api/tools, /api/chat, /api/router, and /api/auth as specified
+app.include_router(tools_router, prefix="/api")
+app.include_router(chat_router, prefix="/api")
+app.include_router(intelligent_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
 
 
 # Root health and info route

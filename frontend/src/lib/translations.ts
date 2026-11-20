@@ -7,6 +7,7 @@ export interface Translations {
     home: string;
     onboarding: string;
     schemes: string;
+    tools: string;
     chat: string;
     roadmap: string;
     language: string;
@@ -70,6 +71,7 @@ export const translations: Record<Language, Translations> = {
       home: "Home",
       onboarding: "Start Journey",
       schemes: "Govt Schemes",
+      tools: "AI Tools",
       chat: "AI Advisor",
       roadmap: "My Roadmap",
       language: "தமிழ்",
@@ -133,6 +135,7 @@ export const translations: Record<Language, Translations> = {
       home: "முகப்பு",
       onboarding: "பயணத்தை தொடங்கு",
       schemes: "அரசு திட்டங்கள்",
+      tools: "AI கருவிகள்",
       chat: "AI ஆலோசகர்",
       roadmap: "என் வரைபடம்",
       language: "English",

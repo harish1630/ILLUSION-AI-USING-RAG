@@ -1,7 +1,7 @@
 """Repository layer for schemes, profiles, roadmaps, and document chunks."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
 from app.schemas.scheme import SchemeResponse, SchemeRuleSchema, SchemeMatchRequest
 from app.schemas.business import BusinessProfileCreate, BusinessProfileResponse
@@ -13,6 +13,7 @@ _SCHEMES_CACHE: Dict[str, Dict[str, Any]] = {}
 _PROFILES_CACHE: Dict[str, Dict[str, Any]] = {}
 _ROADMAPS_CACHE: Dict[str, Dict[str, Any]] = {}
 _CHUNKS_CACHE: List[Dict[str, Any]] = []
+_USERS_CACHE: Dict[str, Dict[str, Any]] = {}
 
 def _now():
     return datetime.now(timezone.utc)
@@ -400,6 +401,138 @@ class SchemeRepository:
                 matched_results.append(scheme_copy)
 
         return matched_results
+
+
+class UserRepository:
+    """Access and storage layer for user accounts, credentials, and password resets."""
+
+    @staticmethod
+    def create_user(
+        email: str,
+        username: str,
+        hashed_password: Optional[str] = None,
+        full_name: Optional[str] = None,
+        picture: Optional[str] = None,
+        google_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Creates and stores a new user record."""
+        user_id = str(uuid.uuid4())
+        user_data = {
+            "id": user_id,
+            "email": email.strip().lower(),
+            "username": username.strip().lower(),
+            "hashed_password": hashed_password,
+            "full_name": full_name or "",
+            "picture": picture,
+            "google_id": google_id,
+            "is_active": True,
+            "reset_token": None,
+            "reset_token_expires_at": None,
+            "created_at": _now().isoformat(),
+            "updated_at": _now().isoformat(),
+        }
+        _USERS_CACHE[user_id] = user_data
+        return dict(user_data)
+
+    @staticmethod
+    def get_by_id(user_id: str) -> Optional[Dict[str, Any]]:
+        return _USERS_CACHE.get(user_id)
+
+    @staticmethod
+    def get_by_email(email: str) -> Optional[Dict[str, Any]]:
+        norm = email.strip().lower()
+        for u in _USERS_CACHE.values():
+            if u["email"].lower() == norm:
+                return dict(u)
+        return None
+
+    @staticmethod
+    def get_by_username(username: str) -> Optional[Dict[str, Any]]:
+        norm = username.strip().lower()
+        for u in _USERS_CACHE.values():
+            if u["username"].lower() == norm:
+                return dict(u)
+        return None
+
+    @staticmethod
+    def get_by_identifier(identifier: str) -> Optional[Dict[str, Any]]:
+        """Finds user by either username or email."""
+        norm = identifier.strip().lower()
+        for u in _USERS_CACHE.values():
+            if u["email"].lower() == norm or u["username"].lower() == norm:
+                return dict(u)
+        return None
+
+    @staticmethod
+    def get_or_create_google_user(
+        google_id: str,
+        email: str,
+        name: Optional[str] = None,
+        picture: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Finds existing user by google_id or email, or registers a new user."""
+        norm_email = email.strip().lower()
+        for u in _USERS_CACHE.values():
+            if u.get("google_id") == google_id or u["email"].lower() == norm_email:
+                u["google_id"] = google_id
+                if picture and not u.get("picture"):
+                    u["picture"] = picture
+                if name and not u.get("full_name"):
+                    u["full_name"] = name
+                return dict(u)
+
+        # Generate unique username from email prefix
+        base_username = norm_email.split("@")[0].replace(".", "_")
+        username = base_username
+        suffix = 1
+        while UserRepository.get_by_username(username):
+            username = f"{base_username}_{suffix}"
+            suffix += 1
+
+        return UserRepository.create_user(
+            email=norm_email,
+            username=username,
+            full_name=name,
+            picture=picture,
+            google_id=google_id,
+        )
+
+    @staticmethod
+    def set_reset_token(email: str, reset_token: str, expires_in_minutes: int = 15) -> bool:
+        """Sets a time-limited password reset token for the given email."""
+        norm = email.strip().lower()
+        for u in _USERS_CACHE.values():
+            if u["email"].lower() == norm:
+                u["reset_token"] = reset_token
+                u["reset_token_expires_at"] = (datetime.now(timezone.utc) + timedelta(minutes=expires_in_minutes)).isoformat()
+                return True
+        return False
+
+    @staticmethod
+    def get_by_reset_token(reset_token: str) -> Optional[Dict[str, Any]]:
+        """Finds user by valid, unexpired reset token."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        for u in _USERS_CACHE.values():
+            if u.get("reset_token") == reset_token:
+                expires_at = u.get("reset_token_expires_at")
+                if expires_at and expires_at > now_iso:
+                    return dict(u)
+        return None
+
+    @staticmethod
+    def reset_password(reset_token: str, new_hashed_password: str) -> bool:
+        """Updates user's password and clears the used reset token."""
+        user = UserRepository.get_by_reset_token(reset_token)
+        if not user:
+            return False
+        uid = user["id"]
+        if uid in _USERS_CACHE:
+            _USERS_CACHE[uid]["hashed_password"] = new_hashed_password
+            _USERS_CACHE[uid]["reset_token"] = None
+            _USERS_CACHE[uid]["reset_token_expires_at"] = None
+            _USERS_CACHE[uid]["updated_at"] = _now().isoformat()
+            return True
+        return False
 
 
 class ProfileRepository:
