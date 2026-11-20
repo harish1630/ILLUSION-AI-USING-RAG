@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { api, ToolDefinition } from "@/lib/api";
+import AuthGuard from "@/components/AuthGuard";
 import {
   Calculator,
   FileText,
@@ -28,7 +29,7 @@ import {
   CornerDownLeft,
 } from "lucide-react";
 
-export default function ToolsPage() {
+function ToolsPageContent() {
   const { language } = useLanguage();
   const isTamil = language === "ta";
 
@@ -819,5 +820,13 @@ export default function ToolsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ToolsPage() {
+  return (
+    <AuthGuard>
+      <ToolsPageContent />
+    </AuthGuard>
   );
 }

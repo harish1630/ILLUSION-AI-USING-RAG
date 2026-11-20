@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { api, Scheme } from "@/lib/api";
+import AuthGuard from "@/components/AuthGuard";
 import {
   Landmark,
   Search,
@@ -18,7 +19,7 @@ import {
   Layers,
 } from "lucide-react";
 
-export default function SchemesPage() {
+function SchemesPageContent() {
   const { language, t } = useLanguage();
   const isTamil = language === "ta";
 
@@ -295,5 +296,13 @@ export default function SchemesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SchemesPage() {
+  return (
+    <AuthGuard>
+      <SchemesPageContent />
+    </AuthGuard>
   );
 }

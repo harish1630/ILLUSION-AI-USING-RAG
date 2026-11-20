@@ -92,8 +92,8 @@ Do not include markdown code block formatting around your JSON if possible.
                 planned.append(item)
                 selected_names.add(item.tool_name)
 
-        # If AI didn't select anything in AUTO mode, apply fast heuristics
-        if mode == ToolSelectionMode.AUTO and not planned:
+        # If AI didn't select anything (e.g. offline or empty), apply fast heuristics
+        if not ai_planned:
             heuristic_planned = cls._heuristic_select_tools(prompt)
             for item in heuristic_planned:
                 if item.tool_name not in selected_names:

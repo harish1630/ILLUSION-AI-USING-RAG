@@ -10,6 +10,7 @@ class MCPTransportType(str, Enum):
     STDIO = "stdio"
     SSE = "sse"
     HTTP = "http"
+    CUSTOM = "custom"
 
 
 class MCPServerStatus(str, Enum):
@@ -54,14 +55,18 @@ class MCPServerCreate(BaseModel):
 
 class MCPServerResponse(BaseModel):
     id: str
-    user_id: str
     name: str
-    transport: MCPTransportType
+    description: Optional[str] = ""
+    user_id: Optional[str] = None
+    transport: Optional[MCPTransportType] = None
+    transport_type: Optional[MCPTransportType] = None
+    config: Dict[str, Any] = Field(default_factory=dict)
     command: Optional[str] = None
     args: List[str] = Field(default_factory=list)
     url: Optional[str] = None
     status: MCPServerStatus
     tool_count: int = 0
+    tools_count: int = 0
     error_message: Optional[str] = None
     created_at: str
     updated_at: str
@@ -72,31 +77,49 @@ class MCPServerResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class MCPToolDefinition(BaseModel):
-    id: str
+    id: Optional[str] = None
     server_id: str
     server_name: str
     tool_name: str
+    name: Optional[str] = None
     qualified_name: str  # e.g. "illusion_custom::get_project_info"
     description: str = ""
     input_schema: Dict[str, Any] = Field(default_factory=dict)
     permission_level: PermissionLevel = PermissionLevel.DENY
-    discovered_at: str
+    discovered_at: Optional[str] = None
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.name:
+            self.name = self.tool_name
+        if not self.id:
+            self.id = self.qualified_name
+        if not self.discovered_at:
+            from datetime import datetime, timezone
+            self.discovered_at = datetime.now(timezone.utc).isoformat()
 
 
 class MCPToolExecuteRequest(BaseModel):
     server_id: Optional[str] = None
     tool_name: str
     arguments: Dict[str, Any] = Field(default_factory=dict)
+    approval_id: Optional[str] = None
 
 
 class MCPToolExecuteResponse(BaseModel):
     tool_name: str
-    server_name: str
+    server_name: Optional[str] = ""
+    server_id: Optional[str] = ""
     status: ExecutionStatus
     result: Optional[Any] = None
     error: Optional[str] = None
     approval_id: Optional[str] = None
     execution_time_ms: float = 0.0
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.server_name and self.server_id:
+            self.server_name = self.server_id
+        elif not self.server_id and self.server_name:
+            self.server_id = self.server_name
 
 
 # ---------------------------------------------------------------------------
@@ -135,9 +158,11 @@ class MCPExecutionLogResponse(BaseModel):
 
 class MCPHealthSummary(BaseModel):
     status: str
-    total_servers: int
-    connected_servers: int
-    total_tools: int
-    pending_approvals: int
-    recent_executions_count: int
+    total_servers: int = 0
+    connected_servers: int = 0
+    active_servers: int = 0
+    total_tools: int = 0
+    pending_approvals: int = 0
+    recent_executions_count: int = 0
+    default_policy: str = "DENY"
 

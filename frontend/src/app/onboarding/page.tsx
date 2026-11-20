@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { api } from "@/lib/api";
+import AuthGuard from "@/components/AuthGuard";
 import {
   Sparkles,
   ArrowRight,
@@ -27,7 +28,7 @@ const TN_DISTRICTS = [
   "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar"
 ];
 
-export default function OnboardingPage() {
+function OnboardingPageContent() {
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
 
@@ -474,6 +475,14 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <AuthGuard>
+      <OnboardingPageContent />
+    </AuthGuard>
   );
 }
 

@@ -191,32 +191,10 @@ export default function LoginGateway() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0C] flex flex-col justify-between text-zinc-100 relative overflow-hidden selection:bg-amber-500/20 selection:text-amber-300">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#0A0A0C] flex flex-col justify-center text-zinc-100 relative overflow-hidden selection:bg-amber-500/20 selection:text-amber-300 py-8">
       {/* Background Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent blur-3xl pointer-events-none -z-0" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[300px] bg-amber-500/5 blur-3xl pointer-events-none -z-0" />
-
-      {/* Top Header bar with Language switcher */}
-      <header className="relative z-10 max-w-6xl mx-auto w-full px-6 py-6 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#141417] border border-[#26262E] flex items-center justify-center text-amber-400 shadow-sm">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-base font-bold tracking-tight text-white font-sans flex items-center gap-1.5">
-              illusion <span className="text-amber-400 font-extrabold">AI</span>
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={toggleLanguage}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2B2B33] bg-[#141417] text-xs font-medium text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
-        >
-          <Globe className="w-3.5 h-3.5 text-amber-400" />
-          <span>{isTamil ? "English" : "தமிழ் (Tamil)"}</span>
-        </button>
-      </header>
 
       {/* Main Login / Registration Card */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-6">

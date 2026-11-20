@@ -131,7 +131,10 @@ class MCPManager:
 
             # Dynamic tool discovery
             if server_id == "illusion_custom":
-                from backend.app.mcp_servers.custom_server import server as custom_srv
+                try:
+                    from app.mcp_servers.custom_server import server as custom_srv
+                except ImportError:
+                    from backend.app.mcp_servers.custom_server import server as custom_srv
                 # Discover tools from custom_server
                 tools = []
                 for tool_name, tool_item in getattr(custom_srv, "_tool_manager", {})._tools.items() if hasattr(custom_srv, "_tool_manager") else []:

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { api, Roadmap, RoadmapTask } from "@/lib/api";
+import AuthGuard from "@/components/AuthGuard";
 import {
   FileCheck2,
   CheckCircle2,
@@ -324,9 +325,11 @@ function RoadmapContent() {
 
 export default function RoadmapPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading Roadmap...</div>}>
-      <RoadmapContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading Roadmap...</div>}>
+        <RoadmapContent />
+      </Suspense>
+    </AuthGuard>
   );
 }
 

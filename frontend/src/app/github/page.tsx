@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import AuthGuard from "@/components/AuthGuard";
 import {
   Github,
   GitBranch,
@@ -43,7 +44,7 @@ interface Repository {
   updated_at?: string;
 }
 
-export default function GitHubPage() {
+function GitHubPageContent() {
   const [status, setStatus] = useState<GitHubStatus | null>(null);
   const [repos, setRepos] = useState<Repository[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -324,5 +325,13 @@ export default function GitHubPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function GitHubPage() {
+  return (
+    <AuthGuard>
+      <GitHubPageContent />
+    </AuthGuard>
   );
 }

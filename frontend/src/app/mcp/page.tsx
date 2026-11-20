@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import AuthGuard from "@/components/AuthGuard";
 import {
   Server,
   Terminal,
@@ -80,7 +81,7 @@ interface MCPLog {
   error_message?: string;
 }
 
-export default function MCPDashboard() {
+function MCPDashboardContent() {
   const [activeTab, setActiveTab] = useState<"overview" | "servers" | "tools" | "permissions" | "approvals" | "logs">("overview");
   const [health, setHealth] = useState<MCPHealth | null>(null);
   const [servers, setServers] = useState<MCPServer[]>([]);
@@ -843,5 +844,13 @@ export default function MCPDashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MCPDashboard() {
+  return (
+    <AuthGuard>
+      <MCPDashboardContent />
+    </AuthGuard>
   );
 }

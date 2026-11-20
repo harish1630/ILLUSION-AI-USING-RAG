@@ -25,16 +25,17 @@ class MCPToolRegistry:
 
     def register_tool(self, tool: MCPToolDefinition):
         """Register or update a tool definition."""
-        qualified_name = f"{tool.server_id}:{tool.name}"
+        t_name = getattr(tool, "tool_name", None) or getattr(tool, "name", "")
+        qualified_name = tool.qualified_name or f"{tool.server_id}:{t_name}"
         self._tools[qualified_name] = tool
         # Also map bare name if not already conflicting
-        if tool.name not in self._tools:
-            self._tools[tool.name] = tool
+        if t_name not in self._tools:
+            self._tools[t_name] = tool
 
         if tool.server_id not in self._server_tools:
             self._server_tools[tool.server_id] = []
-        if tool.name not in self._server_tools[tool.server_id]:
-            self._server_tools[tool.server_id].append(tool.name)
+        if t_name not in self._server_tools[tool.server_id]:
+            self._server_tools[tool.server_id].append(t_name)
 
         logger.debug(f"Registered MCP tool: {qualified_name}")
 

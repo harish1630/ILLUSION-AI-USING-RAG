@@ -36,7 +36,10 @@ class MCPClientConnection:
 
             if self.server_id == "illusion_custom" or self.transport_type == MCPTransportType.CUSTOM:
                 # Direct in-process execution with custom server
-                from backend.app.mcp_servers.custom_server import server as custom_srv
+                try:
+                    from app.mcp_servers.custom_server import server as custom_srv
+                except ImportError:
+                    from backend.app.mcp_servers.custom_server import server as custom_srv
                 self._session = custom_srv
                 self.status = MCPServerStatus.CONNECTED
                 self.error_message = None
@@ -87,7 +90,10 @@ class MCPClientConnection:
             raise RuntimeError(f"Server '{self.server_id}' is not connected (status: {self.status.value})")
 
         if self.server_id == "illusion_custom" or self.transport_type == MCPTransportType.CUSTOM:
-            from backend.app.mcp_servers import custom_server
+            try:
+                from app.mcp_servers import custom_server
+            except ImportError:
+                from backend.app.mcp_servers import custom_server
             fn = getattr(custom_server, tool_name, None)
             if callable(fn):
                 if asyncio.iscoroutinefunction(fn):
