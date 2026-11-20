@@ -16,12 +16,24 @@ from app.routes.chat import router as chat_router
 from app.routes.tools import router as tools_router
 from app.routes.router import router as intelligent_router
 from app.routes.auth import router as auth_router
+try:
+    from app.routes.mcp import router as mcp_router
+    from app.routes.github import router as github_router
+    from app.mcp import mcp_manager
+except ImportError:
+    from backend.app.routes.mcp import router as mcp_router
+    from backend.app.routes.github import router as github_router
+    from backend.app.mcp import mcp_manager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} in {settings.APP_ENV} mode")
     init_db()
+    try:
+        await mcp_manager.initialize()
+    except Exception as e:
+        logger.warning(f"MCP Manager initialization warning: {e}")
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 
@@ -74,6 +86,12 @@ app.include_router(tools_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(intelligent_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
+
+# MCP and GitHub integrations
+app.include_router(mcp_router)
+app.include_router(github_router)
+# Root callback alias for GitHub OAuth
+app.include_router(github_router, prefix="/auth/github", include_in_schema=False)
 
 
 # Root health and info route

@@ -72,6 +72,14 @@ class Settings(BaseSettings):
         default="http://localhost:8000/auth/google/callback",
         description="Google OAuth 2.0 authorized redirect URI",
     )
+
+    # GitHub OAuth & Tools
+    GITHUB_CLIENT_ID: Optional[str] = Field(default=None, description="GitHub OAuth App Client ID")
+    GITHUB_CLIENT_SECRET: Optional[str] = Field(default=None, description="GitHub OAuth App Client Secret")
+    GITHUB_REDIRECT_URI: str = Field(
+        default="http://localhost:8000/auth/github/callback",
+        description="GitHub OAuth authorized redirect URI",
+    )
     SESSION_SECRET: Optional[str] = Field(default=None, description="Session secret key")
     TOKEN_ENCRYPTION_KEY: Optional[str] = Field(default=None, description="Fernet token encryption key")
 

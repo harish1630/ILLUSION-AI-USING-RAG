@@ -144,13 +144,15 @@ function ChatContent() {
     ? [
         "ரூ. 30 லட்சத்திற்கு NEEDS மானியத்தை கணக்கிடுங்கள் (25%)",
         "நான் கோயம்புத்தூரில் ₹3 லட்சத்தில் தொழில் தொடங்க என்ன திட்டங்கள் உள்ளன?",
+        "எனது GitHub களஞ்சியங்களை காட்டு (Show my GitHub repos)",
         "NEEDS திட்டத்தில் அதிகபட்ச மானியம் எவ்வளவு?",
         "உத்யாம் பதிவு செய்ய கட்டணம் உண்டா?",
       ]
     : [
+        "Show my GitHub repositories",
+        "Explain the latest commit in my repository",
+        "Get project info from custom MCP server",
         "Calculate 25% capital subsidy for ₹40 Lakhs project cost under NEEDS scheme",
-        "I want to start a small manufacturing business in Coimbatore with ₹5 lakh. What should I do first?",
-        "What is the maximum subsidy under Tamil Nadu NEEDS scheme?",
         "How do I get free official Udyam registration?",
       ];
 

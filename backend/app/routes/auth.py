@@ -83,6 +83,9 @@ class UserProfileResponse(BaseModel):
     roles: list[str]
 
 
+CurrentUser = TokenPayload
+
+
 # ---------------------------------------------------------------------------
 # FastAPI Dependencies for Protected Endpoints
 # ---------------------------------------------------------------------------

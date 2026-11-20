@@ -191,4 +191,20 @@ class DecisionEngine:
             return {"query": prompt, "limit": 4}
         elif tool_name == "file_reader":
             return {"file_name": "document.txt"}
+        elif tool_name == "github_list_repositories":
+            return {"visibility": "all", "per_page": 20}
+        elif tool_name == "github_get_repository":
+            return {"repo_name": "illusion-ai"}
+        elif tool_name == "github_get_file_content":
+            return {"repo_name": "illusion-ai", "file_path": "README.md"}
+        elif tool_name == "github_list_branches":
+            return {"repo_name": "illusion-ai"}
+        elif tool_name == "github_list_commits":
+            return {"repo_name": "illusion-ai", "limit": 10}
+        elif tool_name == "github_search_code":
+            return {"repo_name": "illusion-ai", "query": prompt}
+        elif tool_name == "github_get_profile":
+            return {}
+        elif tool_name == "mcp_execute":
+            return {"server_id": "illusion_custom", "tool_name": "get_project_info", "arguments": {}}
         return {}

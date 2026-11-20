@@ -778,3 +778,45 @@ class DocumentChunkRepository:
         scored_chunks.sort(key=lambda x: x[0], reverse=True)
         return [c for score, c in scored_chunks[:limit]]
 
+
+_GITHUB_CONNECTIONS_CACHE: Dict[str, Dict[str, Any]] = {}
+
+
+class GitHubConnectionRepository:
+    """Manages GitHub OAuth connection persistence."""
+
+    @staticmethod
+    def save_connection(
+        user_id: str,
+        github_user_id: str,
+        github_username: str,
+        github_email: Optional[str],
+        avatar_url: Optional[str],
+        encrypted_token: str,
+    ) -> Dict[str, Any]:
+        record = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "github_user_id": github_user_id,
+            "github_username": github_username,
+            "github_email": github_email,
+            "avatar_url": avatar_url,
+            "encrypted_access_token": encrypted_token,
+            "connected_at": _now().isoformat(),
+            "updated_at": _now().isoformat(),
+        }
+        _GITHUB_CONNECTIONS_CACHE[user_id] = record
+        return record
+
+    @staticmethod
+    def get_connection(user_id: str) -> Optional[Dict[str, Any]]:
+        return _GITHUB_CONNECTIONS_CACHE.get(user_id)
+
+    @staticmethod
+    def delete_connection(user_id: str) -> bool:
+        if user_id in _GITHUB_CONNECTIONS_CACHE:
+            del _GITHUB_CONNECTIONS_CACHE[user_id]
+            return True
+        return False
+
+

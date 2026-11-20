@@ -183,6 +183,37 @@ Return ONLY valid JSON without markdown code fences."""
                 domain = IntentDomain.FILE_ANALYSIS
             summary = "File reading or document analysis"
 
+        # --- GitHub queries ---
+        github_terms = ["github", "repo", "repository", "commit", "branch", "pull request", "pr", "readme"]
+        if any(t in p for t in github_terms):
+            if "repo" in p or "repositories" in p:
+                if any(w in p for w in ["list", "show", "get my", "all"]):
+                    suggested.append("github_list_repositories")
+                else:
+                    suggested.append("github_get_repository")
+            if "commit" in p:
+                suggested.append("github_list_commits")
+            if "readme" in p or "file" in p:
+                suggested.append("github_get_file_content")
+            if "branch" in p:
+                suggested.append("github_list_branches")
+            if "find" in p or "search" in p:
+                suggested.append("github_search_code")
+            if not suggested:
+                suggested.append("github_list_repositories")
+            if domain == IntentDomain.UNKNOWN:
+                domain = IntentDomain.GENERAL_KNOWLEDGE
+                summary = "GitHub repository or code analysis"
+
+        # --- MCP Custom queries ---
+        mcp_terms = ["mcp", "project info", "project modules", "system status", "illusion_custom"]
+        if any(t in p for t in mcp_terms):
+            needs_mcp = True
+            suggested.append("mcp_execute")
+            if domain == IntentDomain.UNKNOWN:
+                domain = IntentDomain.GENERAL_KNOWLEDGE
+                summary = "MCP tool execution or system diagnostics"
+
         # --- Business startup ---
         biz_terms = ["startup", "business", "entrepreneur", "company", "incorporate", "register", "gst", "license"]
         if any(t in p for t in biz_terms):

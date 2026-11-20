@@ -172,3 +172,93 @@ class RoadmapTaskModel(Base):
 
     roadmap = relationship("UserRoadmapModel", back_populates="tasks")
 
+
+class GitHubConnectionModel(Base):
+    """GitHub OAuth connections and encrypted access tokens."""
+    __tablename__ = "github_connections"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    github_user_id = Column(String(100), nullable=False, index=True)
+    github_username = Column(String(100), nullable=False)
+    github_email = Column(String(255), nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    encrypted_access_token = Column(Text, nullable=False)
+    connected_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class MCPServerModel(Base):
+    """Configured MCP servers and connection parameters."""
+    __tablename__ = "mcp_servers"
+
+    id = Column(String(100), primary_key=True)
+    user_id = Column(String(36), default="system", index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    transport = Column(String(50), nullable=False)
+    command = Column(String(255), nullable=True)
+    args = Column(JSON, default=list)
+    url = Column(String(500), nullable=True)
+    status = Column(String(50), default="disconnected")
+    config = Column(JSON, default=dict)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class MCPToolModel(Base):
+    """Dynamically discovered MCP tools and schemas."""
+    __tablename__ = "mcp_tools"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    server_id = Column(String(100), nullable=False, index=True)
+    tool_name = Column(String(100), nullable=False, index=True)
+    qualified_name = Column(String(200), nullable=False, index=True)
+    description = Column(Text, default="")
+    input_schema = Column(JSON, default=dict)
+    is_enabled = Column(Boolean, default=True)
+    discovered_at = Column(DateTime(timezone=True), default=utc_now)
+
+
+class MCPPermissionModel(Base):
+    """User and tool-level permissions (ALLOW, APPROVAL_REQUIRED, DENY)."""
+    __tablename__ = "mcp_permissions"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    server_id = Column(String(100), nullable=False, index=True)
+    tool_name = Column(String(100), nullable=False, index=True)
+    permission_level = Column(String(50), default="DENY")
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+
+class MCPApprovalModel(Base):
+    """Human-in-the-loop approval requests."""
+    __tablename__ = "mcp_approvals"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    server_id = Column(String(100), nullable=False)
+    tool_name = Column(String(100), nullable=False)
+    arguments = Column(JSON, default=dict)
+    status = Column(String(50), default="PENDING")
+    reviewer_id = Column(String(36), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class MCPExecutionLogModel(Base):
+    """Audit log of MCP tool executions."""
+    __tablename__ = "mcp_execution_logs"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    server_id = Column(String(100), nullable=False)
+    tool_name = Column(String(100), nullable=False)
+    arguments = Column(JSON, default=dict)
+    status = Column(String(50), nullable=False)
+    result = Column(JSON, nullable=True)
+    error_message = Column(Text, nullable=True)
+    duration_ms = Column(Float, default=0.0)
+    executed_at = Column(DateTime(timezone=True), default=utc_now)
+

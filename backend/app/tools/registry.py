@@ -7,6 +7,28 @@ from app.tools.calculator.tool import CalculatorTool
 from app.tools.file_reader.tool import FileReaderTool
 from app.tools.web_search.tool import WebSearchTool
 from app.tools.rag_search.tool import RAGSearchTool
+try:
+    from app.tools.github.tool import (
+        GitHubGetProfileTool,
+        GitHubListRepositoriesTool,
+        GitHubGetRepositoryTool,
+        GitHubGetFileContentTool,
+        GitHubListBranchesTool,
+        GitHubListCommitsTool,
+        GitHubSearchCodeTool,
+    )
+    from app.tools.mcp.tool import MCPBridgeTool
+except ImportError:
+    from backend.app.tools.github.tool import (
+        GitHubGetProfileTool,
+        GitHubListRepositoriesTool,
+        GitHubGetRepositoryTool,
+        GitHubGetFileContentTool,
+        GitHubListBranchesTool,
+        GitHubListCommitsTool,
+        GitHubSearchCodeTool,
+    )
+    from backend.app.tools.mcp.tool import MCPBridgeTool
 
 
 class ToolRegistry:
@@ -22,6 +44,18 @@ class ToolRegistry:
         self.register(FileReaderTool())
         self.register(WebSearchTool())
         self.register(RAGSearchTool())
+
+        # GitHub tools
+        self.register(GitHubGetProfileTool())
+        self.register(GitHubListRepositoriesTool())
+        self.register(GitHubGetRepositoryTool())
+        self.register(GitHubGetFileContentTool())
+        self.register(GitHubListBranchesTool())
+        self.register(GitHubListCommitsTool())
+        self.register(GitHubSearchCodeTool())
+
+        # MCP Bridge tool
+        self.register(MCPBridgeTool())
 
     def register(self, tool: BaseTool) -> None:
         """Register a new tool instance."""
