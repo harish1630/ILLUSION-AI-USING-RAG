@@ -43,6 +43,26 @@ DEFAULT_CATALOG: List[Dict[str, Any]] = [
         "is_active": True,
     },
     {
+        "id": "google_calendar",
+        "name": "google_calendar",
+        "display_name": "Google Calendar",
+        "description": "Manage schedules, inspect upcoming meetings, check availability, and schedule events with AI.",
+        "category": "productivity",
+        "icon": "Calendar",
+        "auth_type": "oauth2",
+        "scopes": [
+            "https://www.googleapis.com/auth/calendar.events.readonly",
+            "https://www.googleapis.com/auth/calendar.events",
+        ],
+        "features": [
+            "List upcoming calendar events",
+            "Check free/busy time availability",
+            "Schedule new events with explicit confirmation",
+            "Sync meeting links & agendas",
+        ],
+        "is_active": True,
+    },
+    {
         "id": "google_drive",
         "name": "google_drive",
         "display_name": "Google Drive",

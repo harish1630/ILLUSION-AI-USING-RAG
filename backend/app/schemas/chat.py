@@ -25,6 +25,7 @@ class ChatMessageRequest(BaseModel):
     question: str = Field(..., min_length=2, description="User question in Tamil, English, or mixed")
     language: Optional[str] = Field(default="en", description="Preferred response language: en or ta")
     conversation_id: Optional[str] = None
+    user_id: Optional[str] = Field(default="guest_user", description="Authenticated user ID or guest identifier")
     profile: Optional[Dict[str, Any]] = None  # Profile context (district, budget, category, etc.)
     # Hybrid Tool Calling fields
     tool_mode: Optional[str] = Field(default="auto", description="Tool selection mode: 'auto', 'manual', 'hybrid'")
@@ -43,4 +44,8 @@ class ChatMessageResponse(BaseModel):
     conversation_id: Optional[str] = None
     executed_tools: List[ChatExecutedTool] = Field(default_factory=list)
     tool_mode_used: Optional[str] = None
+    active_router: Optional[str] = Field(default="chat", description="Active LangGraph router branch (chat, rag, tool, mcp, oauth, multistep)")
+    requires_auth: Optional[bool] = Field(default=False, description="Whether the requested tool requires an account connection")
+    missing_auth_provider: Optional[str] = Field(default=None, description="Provider needed (e.g. github, gmail, google_calendar)")
+    workflow_steps: Optional[List[Dict[str, Any]]] = Field(default_factory=list, description="Execution steps in multi-step workflows")
 

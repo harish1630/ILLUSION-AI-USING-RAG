@@ -21,8 +21,6 @@ from app.plugins.schemas import (
     ApprovalItem,
 )
 from app.plugins.catalog import DEFAULT_CATALOG
-from app.integrations.gmail import GmailPlugin
-from app.integrations.github import GitHubPlugin
 
 try:
     from services.token_manager import token_manager
@@ -44,10 +42,18 @@ class PluginManager:
         # List of audit log records
         self._audit_logs: List[Dict[str, Any]] = []
 
-        # Auto-register core plugins
-        self.register_plugin(GmailPlugin())
-        self.register_plugin(GitHubPlugin())
-        logger.info("Initialized Illusion AI Plugin Marketplace Manager with core plugins (Gmail, GitHub)")
+        # Core plugins are registered lazily on first access to prevent circular imports
+        logger.info("Initialized Illusion AI Plugin Marketplace Manager")
+
+    def _ensure_core_plugins_registered(self):
+        """Lazily register core plugins if not already loaded."""
+        if not self._plugins:
+            from app.integrations.gmail import GmailPlugin
+            from app.integrations.github import GitHubPlugin
+            from app.integrations.google_calendar import GoogleCalendarPlugin
+            self.register_plugin(GmailPlugin())
+            self.register_plugin(GitHubPlugin())
+            self.register_plugin(GoogleCalendarPlugin())
 
     def register_plugin(self, plugin: BasePlugin):
         """Register a plugin instance."""
@@ -56,10 +62,12 @@ class PluginManager:
 
     def get_plugin(self, plugin_id: str) -> Optional[BasePlugin]:
         """Retrieve plugin instance by ID."""
+        self._ensure_core_plugins_registered()
         return self._plugins.get(plugin_id)
 
     def list_catalog(self, user_id: str) -> List[PluginCatalogItem]:
         """List all catalog plugins annotated with the current user's connection status."""
+        self._ensure_core_plugins_registered()
         catalog_items = []
         user_conns = self._integrations.get(user_id, {})
 
@@ -164,6 +172,7 @@ class PluginManager:
 
         # Also sync to GitHubService if github plugin for backward compatibility
         if plugin_id == "github":
+            from app.integrations.github import GitHubPlugin
             github_plugin = self._plugins.get("github")
             if isinstance(github_plugin, GitHubPlugin):
                 github_plugin.service.store_connection(

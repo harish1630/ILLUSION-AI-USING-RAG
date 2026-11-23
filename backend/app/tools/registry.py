@@ -25,6 +25,9 @@ try:
         GmailSendEmailTool,
         GitHubListIssuesTool,
         GitHubCreateIssueTool,
+        CalendarListEventsTool,
+        CalendarCheckAvailabilityTool,
+        CalendarCreateEventTool,
     )
 except ImportError:
     from backend.app.tools.github.tool import (
@@ -44,6 +47,9 @@ except ImportError:
         GmailSendEmailTool,
         GitHubListIssuesTool,
         GitHubCreateIssueTool,
+        CalendarListEventsTool,
+        CalendarCheckAvailabilityTool,
+        CalendarCreateEventTool,
     )
 
 
@@ -73,13 +79,20 @@ class ToolRegistry:
         # MCP Bridge tool
         self.register(MCPBridgeTool())
 
-        # Marketplace Plugin tools (Gmail & GitHub Issues)
+        # Marketplace Plugin tools (Gmail, GitHub Issues, Google Calendar)
         self.register(GmailSearchEmailsTool())
         self.register(GmailReadEmailTool())
         self.register(GmailCreateDraftTool())
         self.register(GmailSendEmailTool())
         self.register(GitHubListIssuesTool())
         self.register(GitHubCreateIssueTool())
+        self.register(CalendarListEventsTool())
+        self.register(CalendarCheckAvailabilityTool())
+        self.register(CalendarCreateEventTool())
+
+    def get_all(self) -> Dict[str, BaseTool]:
+        """Return all registered tools as a dictionary."""
+        return self._tools.copy()
 
     def register(self, tool: BaseTool) -> None:
         """Register a new tool instance."""

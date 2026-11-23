@@ -37,10 +37,23 @@ async def chat_message(req: ChatMessageRequest):
         selected_tools=req.selected_tools,
         tool_args=req.tool_args,
         language=lang,
+        user_id=req.user_id or "guest_user",
+        session_id=req.conversation_id or "default_session",
     )
 
     executed_tools_schema = []
     sources = []
+
+    # Map sources from agent_result if present
+    for src in getattr(agent_result, "sources", []):
+        sources.append(
+            ChatSourceCitation(
+                title=src.get("title", "Verified Source"),
+                url=src.get("url", "https://msmeonline.tn.gov.in/"),
+                document_id=src.get("document_id"),
+                section=src.get("section"),
+            )
+        )
 
     for tool_res in agent_result.executed_tools:
         executed_tools_schema.append(
@@ -51,25 +64,26 @@ async def chat_message(req: ChatMessageRequest):
                 error=tool_res.error,
             )
         )
-        # Extract sources if web_search or rag_search was executed
-        if tool_res.tool_name == "web_search" and tool_res.success and isinstance(tool_res.data, dict):
-            for res_item in tool_res.data.get("results", []):
-                sources.append(
-                    ChatSourceCitation(
-                        title=res_item.get("title", "Web Source"),
-                        url=res_item.get("url", ""),
-                        document_id="web",
+        # Extract sources if web_search or rag_search was executed without prior sources
+        if not sources:
+            if tool_res.tool_name == "web_search" and tool_res.success and isinstance(tool_res.data, dict):
+                for res_item in tool_res.data.get("results", []):
+                    sources.append(
+                        ChatSourceCitation(
+                            title=res_item.get("title", "Web Source"),
+                            url=res_item.get("url", ""),
+                            document_id="web",
+                        )
                     )
-                )
-        elif tool_res.tool_name == "rag_search" and tool_res.success and isinstance(tool_res.data, dict):
-            for chunk in tool_res.data.get("chunks", []):
-                sources.append(
-                    ChatSourceCitation(
-                        title=chunk.get("title", "Verified Government Scheme"),
-                        url=chunk.get("url", "https://msmeonline.tn.gov.in/"),
-                        document_id=chunk.get("id"),
+            elif tool_res.tool_name == "rag_search" and tool_res.success and isinstance(tool_res.data, dict):
+                for chunk in tool_res.data.get("chunks", []):
+                    sources.append(
+                        ChatSourceCitation(
+                            title=chunk.get("title", "Verified Government Scheme"),
+                            url=chunk.get("url", "https://msmeonline.tn.gov.in/"),
+                            document_id=chunk.get("id"),
+                        )
                     )
-                )
 
     follow_ups = (
         [
@@ -96,6 +110,10 @@ async def chat_message(req: ChatMessageRequest):
         conversation_id=req.conversation_id,
         executed_tools=executed_tools_schema,
         tool_mode_used=agent_result.mode_used.value,
+        active_router=agent_result.active_router,
+        requires_auth=agent_result.requires_auth,
+        missing_auth_provider=agent_result.missing_auth_provider,
+        workflow_steps=agent_result.workflow_steps,
     )
 
 

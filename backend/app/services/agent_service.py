@@ -15,6 +15,7 @@ from app.router.intent_classifier import IntentClassifier
 from app.router.decision_engine import DecisionEngine
 from app.router.execution_engine import ExecutionEngine
 from app.router.response_synthesizer import ResponseSynthesizer
+from app.router.langgraph_router import langgraph_router
 
 
 class AgentExecutionResult:
@@ -26,16 +27,31 @@ class AgentExecutionResult:
         executed_tools: List[ToolResult],
         planned_tools: List[Any],
         mode_used: ToolSelectionMode,
+        active_router: Optional[str] = "chat",
+        requires_auth: bool = False,
+        missing_auth_provider: Optional[str] = None,
+        workflow_steps: Optional[List[Dict[str, Any]]] = None,
+        sources: Optional[List[Dict[str, Any]]] = None,
     ):
         self.answer = answer
         self.executed_tools = executed_tools
         self.planned_tools = planned_tools
         self.mode_used = mode_used
+        self.active_router = active_router
+        self.requires_auth = requires_auth
+        self.missing_auth_provider = missing_auth_provider
+        self.workflow_steps = workflow_steps or []
+        self.sources = sources or []
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "answer": self.answer,
             "mode": self.mode_used.value,
+            "active_router": self.active_router,
+            "requires_auth": self.requires_auth,
+            "missing_auth_provider": self.missing_auth_provider,
+            "workflow_steps": self.workflow_steps,
+            "sources": self.sources,
             "executed_tools": [
                 {
                     "name": t.tool_name,
@@ -69,12 +85,14 @@ class AgentService:
         tool_args: Optional[Dict[str, Dict[str, Any]]] = None,
         language: str = "en",
         uploaded_file_data: Optional[Dict[str, Any]] = None,
+        user_id: str = "guest_user",
+        session_id: str = "default_session",
     ) -> AgentExecutionResult:
         """
-        Full intelligent routing pipeline:
-        Analyse → Plan → Execute → Synthesise.
+        Coordinates AI workflows through the 6-branch LangGraph state machine.
+        Falls back smoothly to manual or sequential planning if explicit manual tools are supplied.
         """
-        logger.info(f"AgentService.run_agent: mode={mode.value}, language={language}")
+        logger.info(f"AgentService.run_agent: mode={mode.value}, language={language}, user_id={user_id}")
 
         # Inject uploaded file data if provided
         if uploaded_file_data:
@@ -84,43 +102,56 @@ class AgentService:
             tool_args = tool_args or {}
             tool_args["file_reader"] = uploaded_file_data
 
-        # 1. Intent Classification
-        analysis = await IntentClassifier.analyse(user_prompt, language)
-        logger.info(
-            f"IntentClassifier: domain={analysis.intent_domain.value}, "
-            f"complexity={analysis.complexity.value}, "
-            f"tools={analysis.suggested_tools}"
-        )
+        # 1. AUTO mode: Execute via LangGraph 6-Branch Intelligent Router
+        if mode == ToolSelectionMode.AUTO and not selected_tools:
+            try:
+                lg_result = await langgraph_router.run(
+                    prompt=user_prompt,
+                    user_id=user_id,
+                    session_id=session_id,
+                    language=language,
+                )
 
-        # 2. Decision Engine – build execution plan
+                # Convert executed tools to ToolResult format
+                tool_results = []
+                for t in lg_result.get("executed_tools", []):
+                    tool_results.append(
+                        ToolResult(
+                            tool_name=t.get("name", "unknown"),
+                            success=t.get("success", True),
+                            data=t.get("data"),
+                            error=t.get("error"),
+                        )
+                    )
+
+                return AgentExecutionResult(
+                    answer=lg_result.get("answer", ""),
+                    executed_tools=tool_results,
+                    planned_tools=lg_result.get("planned_tools", []),
+                    mode_used=mode,
+                    active_router=lg_result.get("selected_router", "chat"),
+                    requires_auth=lg_result.get("requires_auth", False),
+                    missing_auth_provider=lg_result.get("missing_auth_provider"),
+                    workflow_steps=lg_result.get("workflow_steps", []),
+                    sources=lg_result.get("sources", []),
+                )
+            except Exception as e:
+                logger.error(f"LangGraph router encountered error: {e}, falling back to legacy pipeline", exc_info=True)
+
+        # 2. Manual / Hybrid / Fallback Pipeline
+        analysis = await IntentClassifier.analyse(user_prompt, language)
         plan = DecisionEngine.plan(
             analysis=analysis,
             mode=mode,
             manual_tools=selected_tools,
             manual_tool_args=tool_args,
         )
-        logger.info(
-            f"DecisionEngine: mode={plan.execution_mode.value}, "
-            f"steps={len(plan.steps)}, "
-            f"approval_needed={plan.requires_approval}"
-        )
-
-        # 3. Execution Engine – run tools
         exec_result = await ExecutionEngine.execute(plan)
-        logger.info(
-            f"ExecutionEngine: {len(exec_result.steps)} tools executed in "
-            f"{exec_result.total_duration_ms:.0f}ms, "
-            f"all_succeeded={exec_result.all_succeeded}"
-        )
-
-        # 4. Response Synthesis
         answer = await ResponseSynthesizer.synthesise(
             analysis=analysis,
             steps=exec_result.steps,
             execution_mode=plan.execution_mode,
         )
-
-        # Convert ExecutionSteps to ToolResults for backward compatibility
         tool_results = ExecutionEngine.steps_to_tool_results(exec_result.steps)
 
         return AgentExecutionResult(
@@ -128,4 +159,5 @@ class AgentService:
             executed_tools=tool_results,
             planned_tools=plan.steps,
             mode_used=mode,
+            active_router="tool" if selected_tools else "chat",
         )

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
-import { api, ChatResponse, ChatSource, ExecutedTool } from "@/lib/api";
+import { api, ChatResponse, ChatSource, ExecutedTool, ChatWorkflowStep } from "@/lib/api";
 import AuthGuard from "@/components/AuthGuard";
 import {
   Send,
@@ -23,6 +24,9 @@ import {
   FileText,
   Sliders,
   Check,
+  Lock,
+  Zap,
+  Cpu,
 } from "lucide-react";
 
 interface Message {
@@ -35,6 +39,10 @@ interface Message {
   disclaimer?: string;
   executed_tools?: ExecutedTool[];
   tool_mode_used?: string;
+  active_router?: string;
+  requires_auth?: boolean;
+  missing_auth_provider?: string;
+  workflow_steps?: ChatWorkflowStep[];
   timestamp: string;
 }
 
@@ -119,6 +127,10 @@ function ChatContent() {
         disclaimer: res.disclaimer,
         executed_tools: res.executed_tools,
         tool_mode_used: res.tool_mode_used,
+        active_router: res.active_router,
+        requires_auth: res.requires_auth,
+        missing_auth_provider: res.missing_auth_provider,
+        workflow_steps: res.workflow_steps,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
@@ -277,6 +289,55 @@ function ChatContent() {
                   : "bg-[#151518] text-zinc-200 border border-[#2E2E36] rounded-tl-none"
               }`}
             >
+              {/* Active LangGraph Router Badge */}
+              {msg.sender === "assistant" && msg.active_router && (
+                <div className="mb-2 flex items-center justify-between">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider border ${
+                      msg.active_router === "rag"
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                        : msg.active_router === "oauth"
+                        ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                        : msg.active_router === "multistep"
+                        ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                        : msg.active_router === "tool"
+                        ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                        : msg.active_router === "mcp"
+                        ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400"
+                        : "bg-zinc-800 border-zinc-700 text-zinc-400"
+                    }`}
+                  >
+                    {msg.active_router === "rag" && <Database className="w-2.5 h-2.5" />}
+                    {msg.active_router === "oauth" && <Lock className="w-2.5 h-2.5" />}
+                    {msg.active_router === "multistep" && <Zap className="w-2.5 h-2.5" />}
+                    {msg.active_router === "tool" && <Wrench className="w-2.5 h-2.5" />}
+                    {msg.active_router === "mcp" && <Cpu className="w-2.5 h-2.5" />}
+                    <span>Router: {msg.active_router}</span>
+                  </span>
+                </div>
+              )}
+
+              {/* Multi-Step Workflow Indicators */}
+              {msg.workflow_steps && msg.workflow_steps.length > 0 && (
+                <div className="mb-3 p-2 bg-[#1C1C20] border border-[#2E2E36] rounded-lg">
+                  <div className="text-[10px] uppercase font-bold text-zinc-400 mb-1.5 flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-purple-400" />
+                    <span>Orchestration Chain:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {msg.workflow_steps.map((st, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-[#121215] border border-[#2E2E36] text-zinc-300"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span>{st.step}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Tool Execution Badge */}
               {msg.executed_tools && msg.executed_tools.length > 0 && (
                 <div className="mb-3 pb-2.5 border-b border-[#24242A] flex flex-wrap items-center gap-1.5">
@@ -298,6 +359,27 @@ function ChatContent() {
 
               {/* Message text */}
               <div className="whitespace-pre-wrap font-normal leading-relaxed">{msg.text}</div>
+
+              {/* OAuth Authorization Banner */}
+              {msg.requires_auth && (
+                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs text-amber-300">
+                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      {isTamil
+                        ? `இதை இயக்க உங்கள் ${msg.missing_auth_provider?.replace('_', ' ').toUpperCase()} கணக்கை இணைக்க வேண்டும்.`
+                        : `Authorization required: Please connect your ${msg.missing_auth_provider?.replace('_', ' ').toUpperCase()} account.`}
+                    </span>
+                  </div>
+                  <Link
+                    href="/marketplace"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold shrink-0 transition-colors"
+                  >
+                    <span>{isTamil ? "Marketplace இல் இணைக்கவும்" : "Connect in Marketplace"}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
+              )}
 
               {/* Citations & Verified Sources */}
               {msg.sources && msg.sources.length > 0 && (

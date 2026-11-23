@@ -97,6 +97,14 @@ export interface ExecutedTool {
   error?: string;
 }
 
+export interface ChatWorkflowStep {
+  step: string;
+  status: string;
+  tool?: string;
+  sources_count?: number;
+  provider?: string;
+}
+
 export interface ChatResponse {
   answer: string;
   language: string;
@@ -108,6 +116,10 @@ export interface ChatResponse {
   conversation_id?: string;
   executed_tools?: ExecutedTool[];
   tool_mode_used?: string;
+  active_router?: string;
+  requires_auth?: boolean;
+  missing_auth_provider?: string;
+  workflow_steps?: ChatWorkflowStep[];
 }
 
 export const api = {
@@ -184,14 +196,15 @@ export const api = {
     return res.json();
   },
 
-  // Chat with Hybrid Tool System
+  // Chat with Hybrid Tool System & LangGraph 6-Branch Router
   async sendChatMessage(
     question: string,
     language: string = "en",
     profile?: any,
     tool_mode: "auto" | "manual" | "hybrid" = "auto",
     selected_tools?: string[],
-    tool_args?: Record<string, any>
+    tool_args?: Record<string, any>,
+    user_id?: string
   ): Promise<ChatResponse> {
     const res = await fetch(`${API_BASE}/chat`, {
       method: "POST",
@@ -203,6 +216,7 @@ export const api = {
         tool_mode,
         selected_tools,
         tool_args,
+        user_id: user_id || (typeof window !== "undefined" ? localStorage.getItem("illusion_user_id") || "guest_user" : "guest_user"),
       }),
     });
     if (!res.ok) throw new Error("Chat request failed");
