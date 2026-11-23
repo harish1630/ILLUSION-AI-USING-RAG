@@ -167,8 +167,15 @@ class GitHubPlugin(BasePlugin):
         ]
 
     def get_auth_url(self, user_id: str, redirect_uri: str) -> Tuple[str, str]:
-        client_id = settings.GITHUB_CLIENT_ID or "github_mock_client_id"
+        client_id = settings.GITHUB_CLIENT_ID
         state = f"github_{secrets.token_urlsafe(24)}"
+
+        # If running in development without real GitHub OAuth credentials,
+        # redirect directly to the callback endpoint with a mock code so local demo/testing works seamlessly
+        if not client_id or client_id.startswith("github_mock") or client_id == "your_github_client_id_here":
+            dev_url = f"{redirect_uri}?code=mock_github_code_{secrets.token_hex(8)}&state={state}&user_id={user_id}"
+            return dev_url, state
+
         params = {
             "client_id": client_id,
             "redirect_uri": redirect_uri,

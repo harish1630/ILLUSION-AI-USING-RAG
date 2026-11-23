@@ -96,8 +96,13 @@ class GoogleCalendarPlugin(BasePlugin):
         ]
 
     def get_auth_url(self, user_id: str, redirect_uri: str) -> Tuple[str, str]:
-        client_id = settings.GOOGLE_CLIENT_ID or "google_mock_client_id"
+        client_id = settings.GOOGLE_CLIENT_ID
         state = f"calendar_{secrets.token_urlsafe(24)}"
+
+        if not client_id or client_id.startswith("google_mock") or client_id == "your_google_client_id_here":
+            dev_url = f"{redirect_uri}?code=mock_calendar_code_{secrets.token_hex(8)}&state={state}&user_id={user_id}"
+            return dev_url, state
+
         params = {
             "client_id": client_id,
             "redirect_uri": redirect_uri,

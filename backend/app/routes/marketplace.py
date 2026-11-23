@@ -85,7 +85,11 @@ async def oauth_callback(
     user_id: Optional[str] = Query("guest_user"),
 ):
     """OAuth callback handler. Exchanges code for tokens and redirects back to React."""
-    frontend_redirect = f"{settings.FRONTEND_URL}/marketplace"
+    # Ensure redirect points to Next.js port 3000 if running locally
+    frontend_base = settings.FRONTEND_URL
+    if "localhost:5173" in frontend_base:
+        frontend_base = "http://localhost:3000"
+    frontend_redirect = f"{frontend_base}/marketplace"
 
     if error:
         logger.warning(f"OAuth failed for {plugin_id}: {error}")
