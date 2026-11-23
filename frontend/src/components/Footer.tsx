@@ -89,6 +89,14 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/marketplace" className="hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                  <span>Plugin Marketplace</span>
+                  <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded border border-amber-500/30">
+                    Apps
+                  </span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/tools" className="hover:text-amber-400 transition-colors flex items-center gap-1.5">
                   <span>AI Tools Studio</span>
                   <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded border border-amber-500/30">

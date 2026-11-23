@@ -64,6 +64,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (storedAccess) {
           setAccessToken(storedAccess);
+          if (storedAccess.startsWith("guest_")) {
+            if (storedUser) {
+              try {
+                setUser(JSON.parse(storedUser));
+              } catch {
+                // ignore
+              }
+            } else {
+              setUser({
+                user_id: "guest_user",
+                email: "guest@illusion.ai",
+                name: "Guest Explorer",
+                roles: ["guest"],
+              });
+            }
+            setIsLoading(false);
+            return;
+          }
+
           // Verify with backend /auth/me
           try {
             const profile = await getCurrentUser(storedAccess);

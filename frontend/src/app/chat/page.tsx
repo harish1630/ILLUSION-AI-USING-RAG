@@ -232,6 +232,8 @@ function ChatContent() {
                   { id: "rag_search", label: "RAG Vector Search" },
                   { id: "web_search", label: "Tavily Web Search" },
                   { id: "file_reader", label: "File Reader" },
+                  { id: "gmail_search_emails", label: "Gmail Search" },
+                  { id: "github_list_repositories", label: "GitHub Repos" },
                 ].map((t) => {
                   const active = selectedTools.includes(t.id);
                   return (

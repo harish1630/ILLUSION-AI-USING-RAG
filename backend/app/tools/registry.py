@@ -18,6 +18,14 @@ try:
         GitHubSearchCodeTool,
     )
     from app.tools.mcp.tool import MCPBridgeTool
+    from app.tools.marketplace.tool import (
+        GmailSearchEmailsTool,
+        GmailReadEmailTool,
+        GmailCreateDraftTool,
+        GmailSendEmailTool,
+        GitHubListIssuesTool,
+        GitHubCreateIssueTool,
+    )
 except ImportError:
     from backend.app.tools.github.tool import (
         GitHubGetProfileTool,
@@ -29,6 +37,14 @@ except ImportError:
         GitHubSearchCodeTool,
     )
     from backend.app.tools.mcp.tool import MCPBridgeTool
+    from backend.app.tools.marketplace.tool import (
+        GmailSearchEmailsTool,
+        GmailReadEmailTool,
+        GmailCreateDraftTool,
+        GmailSendEmailTool,
+        GitHubListIssuesTool,
+        GitHubCreateIssueTool,
+    )
 
 
 class ToolRegistry:
@@ -56,6 +72,14 @@ class ToolRegistry:
 
         # MCP Bridge tool
         self.register(MCPBridgeTool())
+
+        # Marketplace Plugin tools (Gmail & GitHub Issues)
+        self.register(GmailSearchEmailsTool())
+        self.register(GmailReadEmailTool())
+        self.register(GmailCreateDraftTool())
+        self.register(GmailSendEmailTool())
+        self.register(GitHubListIssuesTool())
+        self.register(GitHubCreateIssueTool())
 
     def register(self, tool: BaseTool) -> None:
         """Register a new tool instance."""

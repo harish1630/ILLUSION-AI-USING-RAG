@@ -39,10 +39,10 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/", label: t.nav.home },
+    { href: "/marketplace", label: "Marketplace", badge: "Apps" },
     { href: "/onboarding", label: t.nav.onboarding },
     { href: "/schemes", label: t.nav.schemes },
     { href: "/tools", label: t.nav.tools || "AI Tools" },
-    { href: "/mcp", label: "MCP Hub", badge: "MCP 2.0" },
     { href: "/github", label: "GitHub", badge: "OAuth" },
     { href: "/chat", label: t.nav.chat },
     { href: "/roadmap", label: t.nav.roadmap },

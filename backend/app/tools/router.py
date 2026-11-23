@@ -32,6 +32,15 @@ class ToolRouter:
     TOOL_SELECTION_SYSTEM_PROMPT = """You are the Tool Routing Dispatcher for ILLUSION AI.
 Your role is to analyze a user request and determine which available tools should be invoked, along with their parameters.
 
+Routing Guidelines:
+- For email requests (searching inbox, reading emails, creating drafts, sending messages), select the corresponding gmail_* tool (e.g. gmail_search_emails, gmail_create_draft, gmail_send_email).
+- For creating issues, filing bugs, or reporting tickets, select github_create_issue.
+- For listing or viewing issue tickets, select github_list_issues.
+- For listing repositories, code search, reading files, commits, branches, select github_list_repositories, github_get_file_content, github_get_repository, etc.
+- For subsidies, policies, and schemes in Tamil Nadu & Central India, select rag_search.
+- For real-time web info, live portal updates, or external websites, select web_search.
+- For arithmetic, interest rates, investment ratios, and caps, select calculator.
+
 Available tools:
 {tool_specs}
 
@@ -92,11 +101,11 @@ Do not include markdown code block formatting around your JSON if possible.
                 planned.append(item)
                 selected_names.add(item.tool_name)
 
-        # If AI didn't select anything (e.g. offline or empty), apply fast heuristics
-        if not ai_planned:
-            heuristic_planned = cls._heuristic_select_tools(prompt)
-            for item in heuristic_planned:
-                if item.tool_name not in selected_names:
+        # Heuristic check: augment if AI was offline or missed specific high-intent actions
+        heuristic_planned = cls._heuristic_select_tools(prompt)
+        for item in heuristic_planned:
+            if item.tool_name not in selected_names:
+                if not ai_planned or any(k in item.tool_name for k in ["create_issue", "send_email", "create_draft"]):
                     planned.append(item)
                     selected_names.add(item.tool_name)
 
@@ -173,6 +182,46 @@ Do not include markdown code block formatting around your JSON if possible.
                 reason="Heuristic detected government scheme/policy inquiry",
             ))
 
+        # Check for Gmail triggers: search, read, send, draft
+        if any(term in p_lower for term in ["search email", "find email", "check email", "check my inbox", "gmail search", "emails from", "unread email"]):
+            selected.append(PlannedToolCall(
+                tool_name="gmail_search_emails",
+                arguments={"query": prompt, "max_results": 5},
+                reason="Heuristic detected Gmail inbox search request",
+            ))
+        elif any(term in p_lower for term in ["send email", "send an email", "email to"]):
+            selected.append(PlannedToolCall(
+                tool_name="gmail_send_email",
+                arguments={"to": "recipient@example.com", "subject": "Notification from Illusion AI", "body": prompt},
+                reason="Heuristic detected Gmail message send intent",
+            ))
+        elif any(term in p_lower for term in ["draft email", "create a draft", "save email draft"]):
+            selected.append(PlannedToolCall(
+                tool_name="gmail_create_draft",
+                arguments={"to": "recipient@example.com", "subject": "Draft", "body": prompt},
+                reason="Heuristic detected Gmail draft creation intent",
+            ))
+
+        # Check for GitHub Issues triggers
+        if any(term in p_lower for term in ["create issue", "file bug", "open issue", "report issue", "file an issue"]):
+            selected.append(PlannedToolCall(
+                tool_name="github_create_issue",
+                arguments={"repo_name": "owner/repo", "title": prompt[:60], "body": prompt},
+                reason="Heuristic detected GitHub issue creation intent",
+            ))
+        elif any(term in p_lower for term in ["list issue", "show issue", "view issue", "github issue"]):
+            selected.append(PlannedToolCall(
+                tool_name="github_list_issues",
+                arguments={"repo_name": "owner/repo", "state": "open"},
+                reason="Heuristic detected GitHub issue listing intent",
+            ))
+        elif any(term in p_lower for term in ["github repo", "my repositories", "list repos", "github profile"]):
+            selected.append(PlannedToolCall(
+                tool_name="github_list_repositories",
+                arguments={"visibility": "all"},
+                reason="Heuristic detected GitHub repository query",
+            ))
+
         return selected
 
     @classmethod
@@ -186,4 +235,14 @@ Do not include markdown code block formatting around your JSON if possible.
             return {"query": prompt, "limit": 4}
         elif tool_name == "file_reader":
             return {"file_name": "document.txt"}
+        elif tool_name == "gmail_search_emails":
+            return {"query": prompt, "max_results": 5}
+        elif tool_name == "gmail_send_email":
+            return {"to": "recipient@example.com", "subject": "Notice", "body": prompt}
+        elif tool_name == "gmail_create_draft":
+            return {"to": "recipient@example.com", "subject": "Draft", "body": prompt}
+        elif tool_name == "github_list_issues":
+            return {"repo_name": "owner/repo", "state": "open"}
+        elif tool_name == "github_create_issue":
+            return {"repo_name": "owner/repo", "title": prompt[:60], "body": prompt}
         return {}

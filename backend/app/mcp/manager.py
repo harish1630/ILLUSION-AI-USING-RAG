@@ -81,6 +81,27 @@ class MCPManager:
 
         # Connect illusion_custom
         await self.connect_server("illusion_custom")
+
+        # Dynamically register marketplace plugin tools into MCP registry
+        try:
+            from app.plugins import plugin_manager
+            for p_id, plugin in plugin_manager._plugins.items():
+                p_tools = [
+                    MCPToolDefinition(
+                        tool_name=t.tool_name,
+                        server_id=p_id,
+                        server_name=plugin.display_name,
+                        qualified_name=f"{p_id}:{t.tool_name}",
+                        description=t.description,
+                        input_schema=t.input_schema,
+                    )
+                    for t in plugin.get_tools()
+                ]
+                if p_tools:
+                    mcp_tool_registry.register_tools(p_id, p_tools)
+        except Exception as e:
+            logger.warning(f"Error registering marketplace tools in MCP: {e}")
+
         self._initialized = True
 
     async def register_server(self, server_in: MCPServerCreate) -> MCPServerResponse:
@@ -263,18 +284,36 @@ class MCPManager:
                 error=f"MCP Tool '{tool_name}' not found or no server specified.",
             )
 
-        # Get server connection
-        conn = mcp_client_manager.get_connection(server_id)
-        if not conn or conn.status != MCPServerStatus.CONNECTED:
-            # Try auto-connecting
-            if server_id in self._servers:
-                await self.connect_server(server_id)
-                conn = mcp_client_manager.get_connection(server_id)
+        # Get server connection or marketplace plugin runner
+        try:
+            from app.plugins import plugin_manager
+        except ImportError:
+            from backend.app.plugins import plugin_manager
 
-        async def runner(t_name: str, args: Dict[str, Any]):
-            if not conn:
-                raise RuntimeError(f"Server '{server_id}' is not connected")
-            return await conn.call_tool(t_name, args)
+        if plugin_manager.get_plugin(server_id):
+            async def runner(t_name: str, args: Dict[str, Any]):
+                res = await plugin_manager.execute_tool(
+                    user_id=user_id,
+                    plugin_id=server_id,
+                    tool_name=t_name,
+                    arguments=args,
+                    approval_token=request.approval_id,
+                )
+                if res.status == "SUCCESS":
+                    return res.result
+                raise RuntimeError(res.error or f"Plugin execution returned {res.status}")
+        else:
+            conn = mcp_client_manager.get_connection(server_id)
+            if not conn or conn.status != MCPServerStatus.CONNECTED:
+                # Try auto-connecting
+                if server_id in self._servers:
+                    await self.connect_server(server_id)
+                    conn = mcp_client_manager.get_connection(server_id)
+
+            async def runner(t_name: str, args: Dict[str, Any]):
+                if not conn:
+                    raise RuntimeError(f"Server '{server_id}' is not connected")
+                return await conn.call_tool(t_name, args)
 
         return await mcp_executor.execute(
             server_id=server_id,

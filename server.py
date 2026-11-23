@@ -76,11 +76,12 @@ def run_full_stack():
     print("      ILLUSION AI - Starting Full Stack Platform")
     print("=" * 65)
     print("  • Frontend URL:    http://localhost:3000")
-    print("  • MCP Hub UI:      http://localhost:3000/mcp")
+    print("  • Marketplace UI:  http://localhost:3000/marketplace")
     print("  • GitHub Portal:   http://localhost:3000/github")
     print("  • Backend API:     http://localhost:8000")
     print("  • Interactive Docs: http://localhost:8000/docs")
     print("  • Health Check:    http://localhost:8000/health")
+    print("  • Marketplace API: http://localhost:8000/api/marketplace/plugins")
     print("  • MCP Health:      http://localhost:8000/api/mcp/health")
     print("=" * 65 + "\n")
 

@@ -19,10 +19,12 @@ from app.routes.auth import router as auth_router
 try:
     from app.routes.mcp import router as mcp_router
     from app.routes.github import router as github_router
+    from app.routes.marketplace import router as marketplace_router
     from app.mcp import mcp_manager
 except ImportError:
     from backend.app.routes.mcp import router as mcp_router
     from backend.app.routes.github import router as github_router
+    from backend.app.routes.marketplace import router as marketplace_router
     from backend.app.mcp import mcp_manager
 
 
@@ -87,7 +89,8 @@ app.include_router(chat_router, prefix="/api")
 app.include_router(intelligent_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 
-# MCP and GitHub integrations
+# Marketplace, MCP, and GitHub integrations
+app.include_router(marketplace_router)
 app.include_router(mcp_router)
 app.include_router(github_router)
 # Root callback alias for GitHub OAuth

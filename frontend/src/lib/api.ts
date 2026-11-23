@@ -343,7 +343,246 @@ export const api = {
     }
     return res.json();
   },
+
+  // ---------------------------------------------------------------------------
+  // Plugin Marketplace API Methods
+  // ---------------------------------------------------------------------------
+
+  async getMarketplacePlugins(token?: string): Promise<PluginCatalogItem[]> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/plugins`, { headers });
+    if (!res.ok) throw new Error("Failed to load marketplace plugins");
+    return res.json();
+  },
+
+  async getUserIntegrations(token?: string): Promise<UserIntegration[]> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/integrations`, { headers });
+    if (!res.ok) throw new Error("Failed to load user integrations");
+    return res.json();
+  },
+
+  async connectMarketplacePlugin(pluginId: string, token?: string): Promise<{ authorization_url: string; state: string; plugin_id: string }> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/connect/${pluginId}`, {
+      method: "POST",
+      headers,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to initiate connection for ${pluginId}`);
+    }
+    return res.json();
+  },
+
+  async connectDirectPlugin(data: { plugin_id: string; access_token: string; account_email?: string; account_username?: string }, token?: string): Promise<any> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/connect-direct`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to connect plugin");
+    }
+    return res.json();
+  },
+
+  async disconnectMarketplacePlugin(pluginId: string, token?: string): Promise<any> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/disconnect/${pluginId}`, {
+      method: "POST",
+      headers,
+    });
+    if (!res.ok) throw new Error(`Failed to disconnect ${pluginId}`);
+    return res.json();
+  },
+
+  async getMarketplacePermissions(pluginId: string, token?: string): Promise<PluginPermission[]> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/permissions/${pluginId}`, { headers });
+    if (!res.ok) throw new Error("Failed to load plugin permissions");
+    return res.json();
+  },
+
+  async updateMarketplacePermission(data: { plugin_id: string; tool_name: string; permission_level: string }, token?: string): Promise<any> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/permissions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update tool permission");
+    return res.json();
+  },
+
+  async approveMarketplaceTool(approvalId: string, token?: string): Promise<any> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/approvals/${approvalId}/approve`, {
+      method: "POST",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to approve tool execution");
+    return res.json();
+  },
+
+  async rejectMarketplaceTool(approvalId: string, token?: string): Promise<any> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/approvals/${approvalId}/reject`, {
+      method: "POST",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to reject tool execution");
+    return res.json();
+  },
+
+  async executeMarketplaceTool(data: { plugin_id: string; tool_name: string; arguments?: any; approval_token?: string }, token?: string): Promise<any> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/execute`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Tool execution failed");
+    }
+    return res.json();
+  },
+
+  async getMarketplaceAuditLogs(limit: number = 50, token?: string): Promise<AuditLogItem[]> {
+    const rootBase = API_BASE.replace(/\/api\/v1$/, "");
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${rootBase}/api/marketplace/audit-logs?limit=${limit}`, { headers });
+    if (!res.ok) throw new Error("Failed to load audit logs");
+    return res.json();
+  },
 };
+
+// Export Plugin Marketplace types and functions
+export interface PluginCatalogItem {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string;
+  category: string;
+  icon: string;
+  auth_type: string;
+  scopes: string[];
+  features: string[];
+  is_active: boolean;
+  is_connected: boolean;
+  account_info?: {
+    account_id?: string;
+    account_email?: string;
+    account_username?: string;
+    avatar_url?: string;
+  };
+  connected_at?: string;
+  tools: Array<{
+    tool_name: string;
+    qualified_name: string;
+    description: string;
+    input_schema: any;
+    is_sensitive: boolean;
+    default_permission: string;
+  }>;
+}
+
+export interface UserIntegration {
+  id: string;
+  user_id: string;
+  plugin_id: string;
+  plugin_name: string;
+  plugin_display_name: string;
+  plugin_icon: string;
+  account_id?: string;
+  account_email?: string;
+  account_username?: string;
+  avatar_url?: string;
+  status: string;
+  scopes: string[];
+  connected_at: string;
+  updated_at: string;
+}
+
+export interface PluginPermission {
+  plugin_id: string;
+  tool_name: string;
+  description: string;
+  is_sensitive: boolean;
+  permission_level: "ALLOW" | "APPROVAL_REQUIRED" | "DENY";
+  default_permission: "ALLOW" | "APPROVAL_REQUIRED" | "DENY";
+}
+
+export interface AuditLogItem {
+  id: string;
+  user_id: string;
+  plugin_id: string;
+  tool_name: string;
+  arguments: any;
+  status: "SUCCESS" | "FAILED" | "DENIED" | "APPROVAL_REQUIRED";
+  result?: any;
+  error_message?: string;
+  duration_ms: number;
+  created_at: string;
+}
+
+export const getMarketplacePlugins = api.getMarketplacePlugins.bind(api);
+export const getUserIntegrations = api.getUserIntegrations.bind(api);
+export const connectMarketplacePlugin = api.connectMarketplacePlugin.bind(api);
+export const connectDirectPlugin = api.connectDirectPlugin.bind(api);
+export const disconnectMarketplacePlugin = api.disconnectMarketplacePlugin.bind(api);
+export const getMarketplacePermissions = api.getMarketplacePermissions.bind(api);
+export const updateMarketplacePermission = api.updateMarketplacePermission.bind(api);
+export const approveMarketplaceTool = api.approveMarketplaceTool.bind(api);
+export const rejectMarketplaceTool = api.rejectMarketplaceTool.bind(api);
+export const executeMarketplaceTool = api.executeMarketplaceTool.bind(api);
+export const getMarketplaceAuditLogs = api.getMarketplaceAuditLogs.bind(api);
 
 // Export standalone helper functions for easy import
 export const getGoogleAuthUrl = api.getGoogleAuthUrl.bind(api);
