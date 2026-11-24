@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import AuthGuard from "@/components/AuthGuard";
 import { useAuth } from "@/context/AuthContext";
 import {
   getMarketplacePlugins,
@@ -50,9 +49,9 @@ import {
 
 export default function MarketplacePage() {
   return (
-    <AuthGuard>
+    <React.Suspense fallback={<div className="min-h-screen bg-[#0D0D0E] flex items-center justify-center text-zinc-400">Loading marketplace...</div>}>
       <MarketplaceContent />
-    </AuthGuard>
+    </React.Suspense>
   );
 }
 

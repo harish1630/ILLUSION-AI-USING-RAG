@@ -1,8 +1,5 @@
-"use client";
-
-import React from "react";
-import LoginGateway from "@/components/LoginGateway";
+import { redirect } from "next/navigation";
 
 export default function LoginPage() {
-  return <LoginGateway />;
+  redirect("/");
 }

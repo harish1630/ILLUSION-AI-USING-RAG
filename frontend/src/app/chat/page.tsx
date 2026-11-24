@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { api, ChatResponse, ChatSource, ExecutedTool, ChatWorkflowStep } from "@/lib/api";
-import AuthGuard from "@/components/AuthGuard";
 import {
   Send,
   Sparkles,
@@ -508,10 +507,8 @@ function ChatContent() {
 
 export default function ChatPage() {
   return (
-    <AuthGuard>
-      <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-500">Loading Chat...</div>}>
-        <ChatContent />
-      </Suspense>
-    </AuthGuard>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-500">Loading Chat...</div>}>
+      <ChatContent />
+    </Suspense>
   );
 }

@@ -2,20 +2,11 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
-import { useAuth } from "@/context/AuthContext";
 import { Sparkles, ExternalLink, ShieldCheck, AlertCircle, Wrench } from "lucide-react";
 
 export default function Footer() {
   const { t } = useLanguage();
-  const { isAuthenticated } = useAuth();
-  const pathname = usePathname();
-
-  // Hide footer on login page or when unauthenticated to keep login focused
-  if (pathname === "/login" || !isAuthenticated) {
-    return null;
-  }
 
   const officialPortals = [
     { name: "Tamil Nadu MSME Online", url: "https://msmeonline.tn.gov.in/" },

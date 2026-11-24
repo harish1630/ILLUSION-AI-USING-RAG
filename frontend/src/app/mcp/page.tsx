@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import AuthGuard from "@/components/AuthGuard";
 import {
   Server,
   Terminal,
@@ -848,9 +847,5 @@ function MCPDashboardContent() {
 }
 
 export default function MCPDashboard() {
-  return (
-    <AuthGuard>
-      <MCPDashboardContent />
-    </AuthGuard>
-  );
+  return <MCPDashboardContent />;
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import AuthGuard from "@/components/AuthGuard";
 import {
   Github,
   GitBranch,
@@ -329,9 +328,5 @@ function GitHubPageContent() {
 }
 
 export default function GitHubPage() {
-  return (
-    <AuthGuard>
-      <GitHubPageContent />
-    </AuthGuard>
-  );
+  return <GitHubPageContent />;
 }

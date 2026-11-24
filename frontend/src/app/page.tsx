@@ -3,8 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
-import { useAuth } from "@/context/AuthContext";
-import LoginGateway from "@/components/LoginGateway";
 import {
   Sparkles,
   ArrowRight,
@@ -23,28 +21,10 @@ import {
   Search,
   Database,
   Cpu,
-  Loader2,
 } from "lucide-react";
 
 export default function HomePage() {
   const { t, language } = useLanguage();
-  const { user, isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-          <Loader2 className="w-5 h-5 animate-spin" />
-        </div>
-        <span className="text-xs font-mono text-zinc-400">Loading illusion AI...</span>
-      </div>
-    );
-  }
-
-  // If not logged in, show the login & sign in gateway first
-  if (!isAuthenticated) {
-    return <LoginGateway />;
-  }
 
   const featureCards = [
     {
@@ -142,18 +122,12 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* Badge & User Welcome */}
+          {/* Badge */}
           <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
               <span>{t.hero.badge}</span>
             </div>
-            {user && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#18181D] border border-[#2E2E38] text-zinc-300 text-xs font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Welcome, {user.name || user.email.split("@")[0]}</span>
-              </div>
-            )}
           </div>
 
           {/* Headline */}

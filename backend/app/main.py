@@ -80,14 +80,10 @@ app.include_router(tools_router, prefix=settings.API_V1_PREFIX)
 app.include_router(intelligent_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 
-# Root and direct auth routes (matching http://localhost:8000/auth/google/callback)
-app.include_router(auth_router)
-
-# Also expose direct /api/tools, /api/chat, /api/router, and /api/auth as specified
+# Also expose direct /api/tools, /api/chat, /api/router as specified
 app.include_router(tools_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(intelligent_router, prefix="/api")
-app.include_router(auth_router, prefix="/api")
 
 # Marketplace, MCP, and GitHub integrations
 app.include_router(marketplace_router)

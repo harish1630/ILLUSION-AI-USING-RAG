@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { api, Scheme } from "@/lib/api";
-import AuthGuard from "@/components/AuthGuard";
 import {
   Landmark,
   Search,
@@ -300,9 +299,5 @@ function SchemesPageContent() {
 }
 
 export default function SchemesPage() {
-  return (
-    <AuthGuard>
-      <SchemesPageContent />
-    </AuthGuard>
-  );
+  return <SchemesPageContent />;
 }

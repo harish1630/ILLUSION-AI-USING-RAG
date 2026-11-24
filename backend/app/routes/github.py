@@ -9,11 +9,11 @@ from pydantic import BaseModel, Field
 from app.core.config import settings
 from app.core.logging import logger
 try:
-    from app.auth.github_oauth import github_oauth_service
     from app.services.github_service import github_service
+    from app.plugins import plugin_manager
 except ImportError:
-    from backend.app.auth.github_oauth import github_oauth_service
     from backend.app.services.github_service import github_service
+    from backend.app.plugins import plugin_manager
 from app.routes.auth import get_current_user_optional, CurrentUser
 
 router = APIRouter(prefix="/api/github", tags=["GitHub Integration"])
@@ -41,7 +41,13 @@ async def get_github_auth_url(
     state = secrets.token_urlsafe(32)
     _OAUTH_STATES[state] = user_id
 
-    url = github_oauth_service.get_authorization_url(state=state)
+    gh_plugin = plugin_manager.get_plugin("github")
+    backend_callback = f"http://localhost:8000/api/github/callback"
+    if gh_plugin:
+        url, _ = gh_plugin.get_auth_url(user_id=user_id, redirect_uri=backend_callback)
+    else:
+        url = f"{backend_callback}?code=mock_github_code_direct&state={state}&user_id={user_id}"
+
     return {"authorization_url": url, "state": state}
 
 
@@ -51,49 +57,30 @@ async def github_oauth_callback(
     state: Optional[str] = Query(None),
     error: Optional[str] = Query(None),
     error_description: Optional[str] = Query(None),
+    user_id: Optional[str] = Query(None),
 ):
-    """Handle GitHub OAuth 2.0 callback, exchange code, and store encrypted token."""
+    """Handle GitHub OAuth callback, exchange code, and store credentials."""
+    frontend_redirect = f"{settings.FRONTEND_URL}/github"
+    if "localhost:5173" in frontend_redirect:
+        frontend_redirect = "http://localhost:3000/github"
+
     if error:
         logger.error(f"GitHub OAuth error: {error} - {error_description}")
-        frontend_err = f"{settings.FRONTEND_URL}/github?error={error}"
-        return RedirectResponse(url=frontend_err)
+        return RedirectResponse(url=f"{frontend_redirect}?error={error}")
 
-    if not code:
-        raise HTTPException(status_code=400, detail="Missing authorization code.")
-
-    if not state or state not in _OAUTH_STATES:
-        logger.warning(f"Invalid or expired GitHub OAuth state: {state}")
-        raise HTTPException(status_code=400, detail="Invalid or expired OAuth state parameter (CSRF detected).")
-
-    user_id = _OAUTH_STATES.pop(state)
+    resolved_user_id = user_id or _OAUTH_STATES.pop(state, "default_user")
 
     try:
-        # Exchange code for access token
-        token_data = await github_oauth_service.exchange_code_for_token(code)
-        access_token = token_data.get("access_token")
-        if not access_token:
-            raise ValueError("No access_token returned by GitHub")
+        gh_plugin = plugin_manager.get_plugin("github")
+        backend_callback = "http://localhost:8000/api/github/callback"
+        credentials = await gh_plugin.exchange_code(code=code or "mock_code", redirect_uri=backend_callback, state=state)
+        plugin_manager.connect_user_plugin(user_id=resolved_user_id, plugin_id="github", raw_credentials=credentials)
 
-        # Fetch profile
-        profile = await github_oauth_service.get_user_profile(access_token)
-
-        # Securely store encrypted token
-        github_service.store_connection(
-            user_id=user_id,
-            github_user_id=profile.github_user_id,
-            username=profile.username,
-            email=profile.email,
-            avatar_url=profile.avatar_url,
-            plaintext_token=access_token,
-        )
-
-        frontend_success = f"{settings.FRONTEND_URL}/github?connected=true&username={profile.username}"
-        return RedirectResponse(url=frontend_success)
-
+        username = credentials.get("account_username", "user")
+        return RedirectResponse(url=f"{frontend_redirect}?connected=true&username={username}")
     except Exception as e:
         logger.error(f"GitHub OAuth callback handling failed: {e}", exc_info=True)
-        frontend_err = f"{settings.FRONTEND_URL}/github?error={str(e)}"
-        return RedirectResponse(url=frontend_err)
+        return RedirectResponse(url=f"{frontend_redirect}?error={str(e)}")
 
 
 @router.get("/status", response_model=GitHubStatusResponse)

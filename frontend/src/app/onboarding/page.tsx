@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { api } from "@/lib/api";
-import AuthGuard from "@/components/AuthGuard";
 import {
   Sparkles,
   ArrowRight,
@@ -479,10 +478,6 @@ function OnboardingPageContent() {
 }
 
 export default function OnboardingPage() {
-  return (
-    <AuthGuard>
-      <OnboardingPageContent />
-    </AuthGuard>
-  );
+  return <OnboardingPageContent />;
 }
 

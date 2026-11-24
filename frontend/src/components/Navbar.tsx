@@ -1,41 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
-import { useAuth } from "@/context/AuthContext";
 import {
   Sparkles,
   Globe,
   Menu,
   X,
   ArrowRight,
-  User,
-  LogOut,
-  ChevronDown,
-  Shield,
-  Loader2,
 } from "lucide-react";
 
 export default function Navbar() {
   const { language, toggleLanguage, t } = useLanguage();
-  const { user, isAuthenticated, isLoading, loginWithGoogle, logout } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setUserDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const navLinks = [
     { href: "/", label: t.nav.home },
@@ -43,7 +23,7 @@ export default function Navbar() {
     { href: "/onboarding", label: t.nav.onboarding },
     { href: "/schemes", label: t.nav.schemes },
     { href: "/tools", label: t.nav.tools || "AI Tools" },
-    { href: "/github", label: "GitHub", badge: "OAuth" },
+    { href: "/github", label: "GitHub", badge: "Tools" },
     { href: "/chat", label: t.nav.chat },
     { href: "/roadmap", label: t.nav.roadmap },
   ];
@@ -67,34 +47,32 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links (Only shown when authenticated) */}
-          {isAuthenticated && (
-            <nav className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all relative flex items-center gap-1.5 ${
-                      isActive
-                        ? "text-amber-400 bg-amber-500/10 border border-amber-500/30 font-semibold"
-                        : "text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent"
-                    }`}
-                  >
-                    {link.label}
-                    {link.badge && (
-                      <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-300 text-[10px] font-semibold rounded border border-amber-500/30">
-                        {link.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
+          {/* Desktop Navigation Links - Always Visible */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all relative flex items-center gap-1.5 ${
+                    isActive
+                      ? "text-amber-400 bg-amber-500/10 border border-amber-500/30 font-semibold"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent"
+                  }`}
+                >
+                  {link.label}
+                  {link.badge && (
+                    <span className="px-1.5 py-0.2 bg-amber-500/20 text-amber-300 text-[10px] font-semibold rounded border border-amber-500/30">
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
-          {/* Actions: Google Auth, Language Toggle & CTA */}
+          {/* Actions: Language Toggle & CTA */}
           <div className="flex items-center gap-2.5">
             <button
               onClick={toggleLanguage}
@@ -105,105 +83,29 @@ export default function Navbar() {
               <span>{t.nav.language}</span>
             </button>
 
-            {/* Authenticated User Menu */}
-            {isAuthenticated && user ? (
-              <>
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-[#2E2E36] bg-[#161619] hover:bg-[#1E1E24] text-xs font-medium text-zinc-200 transition-all"
-                  >
-                    {user.picture ? (
-                      <img
-                        src={user.picture}
-                        alt={user.name || "User"}
-                        className="w-5 h-5 rounded-full object-cover border border-amber-500/40"
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
-                        {(user.name || user.email || "U").charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <span className="max-w-[100px] truncate">{user.name || user.email.split("@")[0]}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
-                  </button>
+            <Link
+              href="/onboarding"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-black px-3.5 py-1.5 rounded-md text-xs font-semibold shadow-sm transition-all"
+            >
+              <span>{t.hero.primaryCta}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
 
-                  {/* Dropdown Menu */}
-                  {userDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#141417] border border-[#2B2B33] shadow-2xl py-1.5 z-50 text-xs">
-                      <div className="px-3 py-2 border-b border-[#24242A]">
-                        <div className="font-semibold text-white truncate">{user.name || "Entrepreneur"}</div>
-                        <div className="text-[11px] text-zinc-400 truncate">{user.email}</div>
-                        <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                          <Shield className="w-2.5 h-2.5" />
-                          <span>Verified User</span>
-                        </div>
-                      </div>
-
-                      <Link
-                        href="/roadmap"
-                        onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
-                      >
-                        <span>My Startup Roadmap</span>
-                      </Link>
-
-                      <Link
-                        href="/chat"
-                        onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
-                      >
-                        <span>AI Advisory Session</span>
-                      </Link>
-
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          logout();
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border-t border-[#24242A] transition-colors"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <Link
-                  href="/onboarding"
-                  className="hidden sm:inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-black px-3.5 py-1.5 rounded-md text-xs font-semibold shadow-sm transition-all"
-                >
-                  <span>{t.hero.primaryCta}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </>
-            ) : null}
-
-            {/* Mobile menu toggle only when authenticated */}
-            {isAuthenticated && (
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900"
-                aria-label="Toggle navigation menu"
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 text-zinc-200" />}
-              </button>
-            )}
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 text-zinc-200" />}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu drawer (Only shown when authenticated) */}
-      {isAuthenticated && mobileMenuOpen && (
+      {/* Mobile menu drawer */}
+      {mobileMenuOpen && (
         <div className="md:hidden border-b border-[#24242A] bg-[#0D0D0E] px-4 pt-2 pb-4 space-y-1">
-          {user && (
-            <div className="px-3 py-2 mb-2 bg-[#141418] rounded-lg border border-[#272730] text-xs">
-              <div className="font-semibold text-white">{user.name || "Entrepreneur"}</div>
-              <div className="text-zinc-400 text-[11px] truncate">{user.email}</div>
-            </div>
-          )}
-
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -227,18 +129,7 @@ export default function Navbar() {
             );
           })}
 
-          <div className="pt-2 space-y-2 border-t border-[#24242A]">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                logout();
-              }}
-              className="w-full flex items-center justify-center gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-400 py-2 rounded-md text-xs font-medium"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
-
+          <div className="pt-2 border-t border-[#24242A]">
             <Link
               href="/onboarding"
               onClick={() => setMobileMenuOpen(false)}

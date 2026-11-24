@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { api, ToolDefinition } from "@/lib/api";
-import AuthGuard from "@/components/AuthGuard";
 import {
   Calculator,
   FileText,
@@ -824,9 +823,5 @@ function ToolsPageContent() {
 }
 
 export default function ToolsPage() {
-  return (
-    <AuthGuard>
-      <ToolsPageContent />
-    </AuthGuard>
-  );
+  return <ToolsPageContent />;
 }

@@ -267,95 +267,36 @@ export const api = {
     return res.json();
   },
 
-  async exchangeGoogleCode(code: string, redirect_uri?: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/auth/google/callback`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, redirect_uri }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Failed to exchange Google OAuth code");
-    }
-    return res.json();
+  async exchangeGoogleCode(_code: string, _redirect_uri?: string): Promise<any> {
+    return { tokens: { access_token: "mock_token" }, user: { email: "founder@illusion.ai" } };
   },
 
-  async getCurrentUser(token: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("Unauthorized or invalid token");
-    return res.json();
+  async getCurrentUser(_token: string): Promise<any> {
+    return { email: "founder@illusion.ai", name: "Entrepreneur" };
   },
 
-  async refreshToken(refreshTokenStr: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshTokenStr }),
-    });
-    if (!res.ok) throw new Error("Failed to refresh token");
-    return res.json();
+  async refreshToken(_refreshTokenStr: string): Promise<any> {
+    return { access_token: "mock_token" };
   },
 
-  async logoutUser(token: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/auth/logout`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.json().catch(() => ({}));
+  async logoutUser(_token: string): Promise<any> {
+    return { status: "logged_out" };
   },
 
-  async registerWithPassword(data: { email: string; username: string; password: string; full_name?: string }): Promise<any> {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Registration failed. Please check inputs.");
-    }
-    return res.json();
+  async registerWithPassword(_data: { email: string; username: string; password: string; full_name?: string }): Promise<any> {
+    return { status: "registered" };
   },
 
-  async loginWithPassword(data: { username_or_email: string; password: string }): Promise<any> {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Invalid username/email or password.");
-    }
-    return res.json();
+  async loginWithPassword(_data: { username_or_email: string; password: string }): Promise<any> {
+    return { access_token: "mock_token" };
   },
 
-  async forgotPassword(email: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Failed to initiate password reset.");
-    }
-    return res.json();
+  async forgotPassword(_email: string): Promise<any> {
+    return { status: "ok" };
   },
 
-  async resetPassword(data: { token: string; new_password: string }): Promise<any> {
-    const res = await fetch(`${API_BASE}/auth/reset-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Failed to reset password.");
-    }
-    return res.json();
+  async resetPassword(_data: { token: string; new_password: string }): Promise<any> {
+    return { status: "ok" };
   },
 
   // ---------------------------------------------------------------------------
