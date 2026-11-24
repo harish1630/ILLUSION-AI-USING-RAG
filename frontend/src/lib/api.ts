@@ -261,42 +261,119 @@ export const api = {
   },
 
   // Authentication & Google OAuth Endpoints
-  async getGoogleAuthUrl(): Promise<{ authorization_url: string; client_id_configured: boolean }> {
-    const res = await fetch(`${API_BASE}/auth/google/url`);
+  async getGoogleAuthUrl(redirect_uri?: string): Promise<{ auth_url: string; state: string; scopes: string[] }> {
+    const query = redirect_uri ? `?redirect_uri=${encodeURIComponent(redirect_uri)}` : "";
+    const res = await fetch(`${API_BASE}/auth/google/url${query}`, {
+      credentials: "include",
+    });
     if (!res.ok) throw new Error("Failed to get Google auth URL");
     return res.json();
   },
 
-  async exchangeGoogleCode(_code: string, _redirect_uri?: string): Promise<any> {
-    return { tokens: { access_token: "mock_token" }, user: { email: "founder@illusion.ai" } };
+  async exchangeGoogleCode(code: string, state: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/google/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`, {
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Google authentication callback failed");
+    }
+    return res.json().catch(() => ({ status: "success" }));
   },
 
-  async getCurrentUser(_token: string): Promise<any> {
-    return { email: "founder@illusion.ai", name: "Entrepreneur" };
+  async getCurrentUser(token?: string): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (token && !token.startsWith("default_") && !token.startsWith("guest_")) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers,
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Unauthorized");
+    }
+    return res.json();
   },
 
-  async refreshToken(_refreshTokenStr: string): Promise<any> {
-    return { access_token: "mock_token" };
+  async refreshToken(refreshTokenStr?: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ refresh_token: refreshTokenStr }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Session refresh failed");
+    }
+    return res.json();
   },
 
-  async logoutUser(_token: string): Promise<any> {
-    return { status: "logged_out" };
+  async logoutUser(token?: string): Promise<any> {
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/auth/logout`, {
+      method: "POST",
+      headers,
+      credentials: "include",
+    });
+    return res.json().catch(() => ({ status: "logged_out" }));
   },
 
-  async registerWithPassword(_data: { email: string; username: string; password: string; full_name?: string }): Promise<any> {
-    return { status: "registered" };
+  async registerWithPassword(data: { email: string; username: string; password: string; full_name?: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Registration failed");
+    }
+    return res.json();
   },
 
-  async loginWithPassword(_data: { username_or_email: string; password: string }): Promise<any> {
-    return { access_token: "mock_token" };
+  async loginWithPassword(data: { username_or_email: string; password: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Login failed");
+    }
+    return res.json();
   },
 
-  async forgotPassword(_email: string): Promise<any> {
-    return { status: "ok" };
+  async forgotPassword(email: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Password reset request failed");
+    }
+    return res.json();
   },
 
-  async resetPassword(_data: { token: string; new_password: string }): Promise<any> {
-    return { status: "ok" };
+  async resetPassword(data: { token: string; new_password: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Password reset failed");
+    }
+    return res.json();
   },
 
   // ---------------------------------------------------------------------------

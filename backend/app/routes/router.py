@@ -6,9 +6,11 @@ Endpoints:
 - GET  /api/router/status   – Router health and configuration status
 """
 
-from fastapi import APIRouter
+from typing import Optional
+from fastapi import APIRouter, Depends
 from app.core.logging import logger
 from app.core.config import settings
+from app.routes.auth import get_current_user_optional, CurrentUser
 from app.router.schemas import (
     RouterAnalyzeRequest,
     RouterAnalyzeResponse,
@@ -49,12 +51,16 @@ async def analyze_prompt(req: RouterAnalyzeRequest) -> RouterAnalyzeResponse:
 
 
 @router.post("/execute", response_model=RouterExecuteResponse)
-async def execute_prompt(req: RouterExecuteRequest) -> RouterExecuteResponse:
+async def execute_prompt(
+    req: RouterExecuteRequest,
+    current_user: Optional[CurrentUser] = Depends(get_current_user_optional),
+) -> RouterExecuteResponse:
     """Full pipeline: Analyse → Plan → Execute → Synthesise.
 
     Returns the final answer along with detailed execution metadata.
     """
-    logger.info(f"Router /execute: prompt='{req.prompt[:80]}...' mode={req.tool_mode}")
+    user_id = current_user.sub if current_user else "default_user"
+    logger.info(f"Router /execute: user={user_id} prompt='{req.prompt[:80]}...' mode={req.tool_mode}")
 
     # 1. Intent classification
     analysis = await IntentClassifier.analyse(req.prompt, req.language or "en")
@@ -67,6 +73,8 @@ async def execute_prompt(req: RouterExecuteRequest) -> RouterExecuteResponse:
         manual_tools=req.selected_tools,
         manual_tool_args=req.tool_args,
     )
+    if hasattr(plan, "user_id"):
+        plan.user_id = user_id
 
     # 3. Execution engine
     exec_result = await ExecutionEngine.execute(plan)

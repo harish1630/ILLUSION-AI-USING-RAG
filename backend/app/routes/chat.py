@@ -1,17 +1,22 @@
 """Bilingual RAG & Hybrid Tool Chat Assistant endpoints."""
 
-from fastapi import APIRouter
+from typing import Optional
+from fastapi import APIRouter, Depends
 from app.schemas.chat import ChatMessageRequest, ChatMessageResponse, ChatExecutedTool, ChatSourceCitation
 from app.rag.answer_generator import AnswerGenerator, detect_language
 from app.services.agent_service import AgentService
 from app.router.schemas import ToolSelectionMode
 from app.core.constants import DISCLAIMER_EN, DISCLAIMER_TA
+from app.routes.auth import get_current_user_optional, CurrentUser
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
 @router.post("", response_model=ChatMessageResponse)
-async def chat_message(req: ChatMessageRequest):
+async def chat_message(
+    req: ChatMessageRequest,
+    current_user: Optional[CurrentUser] = Depends(get_current_user_optional),
+):
     """
     Bilingual Chatbot powered by Hybrid Tool Calling.
     Supports:
@@ -31,13 +36,15 @@ async def chat_message(req: ChatMessageRequest):
     lang = detect_language(req.question, default_lang=req.language or "en")
     is_tamil = lang == "ta"
 
+    resolved_user_id = current_user.sub if current_user else (req.user_id or "guest_user")
+
     agent_result = await AgentService.run_agent(
         user_prompt=req.question,
         mode=mode,
         selected_tools=req.selected_tools,
         tool_args=req.tool_args,
         language=lang,
-        user_id=req.user_id or "guest_user",
+        user_id=resolved_user_id,
         session_id=req.conversation_id or "default_session",
     )
 

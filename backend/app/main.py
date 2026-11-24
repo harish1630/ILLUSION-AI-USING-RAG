@@ -79,6 +79,8 @@ app.include_router(chat_router, prefix=settings.API_V1_PREFIX)
 app.include_router(tools_router, prefix=settings.API_V1_PREFIX)
 app.include_router(intelligent_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
+# Single canonical prefix in Swagger docs (/api/v1/auth), with backward-compatible alias /auth hidden from schema
+app.include_router(auth_router, include_in_schema=False)
 
 # Also expose direct /api/tools, /api/chat, /api/router as specified
 app.include_router(tools_router, prefix="/api")

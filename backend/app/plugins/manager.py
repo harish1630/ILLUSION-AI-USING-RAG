@@ -170,6 +170,23 @@ class PluginManager:
             self._integrations[user_id] = {}
         self._integrations[user_id][plugin_id] = conn_data
 
+        # Synchronize with TokenVault
+        try:
+            from app.integrations.token_vault import token_vault
+            token_vault.store_tokens(
+                user_id=user_id,
+                plugin_id=plugin_id,
+                access_token=access_token,
+                refresh_token=refresh_token,
+                scopes=raw_credentials.get("scopes", []),
+                account_id=raw_credentials.get("account_id"),
+                account_email=raw_credentials.get("account_email"),
+                account_username=raw_credentials.get("account_username"),
+                avatar_url=raw_credentials.get("avatar_url"),
+            )
+        except Exception as e:
+            logger.warning(f"TokenVault synchronization notice: {e}")
+
         # Also sync to GitHubService if github plugin for backward compatibility
         if plugin_id == "github":
             from app.integrations.github import GitHubPlugin
@@ -205,6 +222,12 @@ class PluginManager:
         # Remove connection
         if user_id in self._integrations:
             self._integrations[user_id].pop(plugin_id, None)
+
+        try:
+            from app.integrations.token_vault import token_vault
+            token_vault.revoke_tokens(user_id, plugin_id)
+        except Exception as e:
+            logger.warning(f"TokenVault revoke notice: {e}")
 
         # Clear permissions
         prefix = f"{plugin_id}:"

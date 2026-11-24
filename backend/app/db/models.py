@@ -114,10 +114,139 @@ class UserModel(Base):
     picture = Column(String(500), nullable=True)
     google_id = Column(String(100), unique=True, nullable=True, index=True)
     is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
     reset_token = Column(String(255), nullable=True, index=True)
     reset_token_expires_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    roles = relationship("UserRoleModel", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("UserSessionModel", back_populates="user", cascade="all, delete-orphan")
+
+
+class UserRoleModel(Base):
+    __tablename__ = "user_roles"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(50), nullable=False, default="user")  # 'user', 'admin', 'developer'
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    user = relationship("UserModel", back_populates="roles")
+
+
+class UserSessionModel(Base):
+    __tablename__ = "user_sessions"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_agent = Column(String(500), nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    is_active = Column(Boolean, default=True)
+    last_active_at = Column(DateTime(timezone=True), default=utc_now)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    user = relationship("UserModel", back_populates="sessions")
+    refresh_tokens = relationship("RefreshTokenModel", back_populates="session", cascade="all, delete-orphan")
+
+
+class RefreshTokenModel(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(String(36), ForeignKey("user_sessions.id", ondelete="CASCADE"), nullable=True, index=True)
+    token_hash = Column(String(64), nullable=False, unique=True, index=True)  # SHA-256 of token
+    jti = Column(String(100), nullable=False, unique=True, index=True)
+    is_revoked = Column(Boolean, default=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    session = relationship("UserSessionModel", back_populates="refresh_tokens")
+
+
+class OAuthAccountModel(Base):
+    __tablename__ = "oauth_accounts"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider = Column(String(50), nullable=False)  # 'google'
+    provider_user_id = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True)
+    encrypted_access_token = Column(Text, nullable=True)
+    encrypted_refresh_token = Column(Text, nullable=True)
+    token_expires_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+
+class ConnectedIntegrationModel(Base):
+    __tablename__ = "connected_integrations"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    plugin_id = Column(String(100), nullable=False, index=True)
+    account_id = Column(String(255), nullable=True)
+    account_email = Column(String(255), nullable=True)
+    account_username = Column(String(255), nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    status = Column(String(50), default="connected")  # 'connected', 'expired', 'revoked'
+    scopes = Column(JSON, default=list)
+    connected_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class IntegrationTokenModel(Base):
+    __tablename__ = "integration_tokens"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    integration_id = Column(String(36), ForeignKey("connected_integrations.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    plugin_id = Column(String(100), nullable=False, index=True)
+    encrypted_access_token = Column(Text, nullable=False)
+    encrypted_refresh_token = Column(Text, nullable=True)
+    token_expires_at = Column(DateTime(timezone=True), nullable=True)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class PluginPermissionModel(Base):
+    __tablename__ = "plugin_permissions"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    plugin_id = Column(String(100), nullable=False, index=True)
+    tool_name = Column(String(100), nullable=False, index=True)
+    permission_level = Column(String(50), default="DENY")  # 'ALLOW', 'APPROVAL_REQUIRED', 'DENY'
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class AuditLogModel(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), nullable=False, index=True)
+    action = Column(String(100), nullable=False, index=True)
+    resource_type = Column(String(100), nullable=False)  # 'auth', 'plugin', 'mcp', 'router'
+    resource_id = Column(String(255), nullable=True)
+    details = Column(JSON, default=dict)
+    ip_address = Column(String(45), nullable=True)
+    status = Column(String(50), default="SUCCESS")  # 'SUCCESS', 'FAILED', 'DENIED', 'APPROVAL_REQUIRED'
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+
+
+class OAuthStateModel(Base):
+    __tablename__ = "oauth_states"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    state = Column(String(255), unique=True, nullable=False, index=True)
+    flow_type = Column(String(50), nullable=False, default="login")  # 'login' or 'plugin'
+    plugin_id = Column(String(100), nullable=True)
+    user_id = Column(String(36), nullable=True)
+    redirect_uri = Column(String(500), nullable=False)
+    code_verifier = Column(String(255), nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
 
 
 class UserProfileModel(Base):
