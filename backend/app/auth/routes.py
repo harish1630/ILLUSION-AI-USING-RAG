@@ -202,18 +202,27 @@ async def google_callback(
             user_agent=user_agent,
         )
 
-        frontend_redirect = f"{settings.FRONTEND_URL}/chat?auth_success=true"
+        frontend_base = settings.FRONTEND_URL
+        if "localhost:5173" in frontend_base:
+            frontend_base = "http://localhost:3000"
+        frontend_redirect = f"{frontend_base}/chat?auth_success=true"
         redirect_resp = RedirectResponse(url=frontend_redirect, status_code=status.HTTP_302_FOUND)
         _set_auth_cookies(redirect_resp, tokens)
         return redirect_resp
     except ValueError as e:
         logger.error(f"Google OAuth callback validation failed: {e}")
-        error_url = f"{settings.FRONTEND_URL}/login?error={urllib.parse.quote(str(e))}"
+        frontend_base = settings.FRONTEND_URL
+        if "localhost:5173" in frontend_base:
+            frontend_base = "http://localhost:3000"
+        error_url = f"{frontend_base}/login?error={urllib.parse.quote(str(e))}"
         return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
     except Exception as e:
         logger.error(f"Unexpected Google OAuth error: {e}")
+        frontend_base = settings.FRONTEND_URL
+        if "localhost:5173" in frontend_base:
+            frontend_base = "http://localhost:3000"
         return RedirectResponse(
-            url=f"{settings.FRONTEND_URL}/login?error=oauth_failed",
+            url=f"{frontend_base}/login?error=oauth_failed",
             status_code=status.HTTP_302_FOUND,
         )
 

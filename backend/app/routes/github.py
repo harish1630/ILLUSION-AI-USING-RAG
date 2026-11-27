@@ -42,7 +42,7 @@ async def get_github_auth_url(
     _OAUTH_STATES[state] = user_id
 
     gh_plugin = plugin_manager.get_plugin("github")
-    backend_callback = f"http://localhost:8000/api/github/callback"
+    backend_callback = getattr(settings, "GITHUB_REDIRECT_URI", None) or "http://localhost:8000/api/marketplace/callback/github"
     if gh_plugin:
         url, _ = gh_plugin.get_auth_url(user_id=user_id, redirect_uri=backend_callback)
     else:
@@ -72,7 +72,7 @@ async def github_oauth_callback(
 
     try:
         gh_plugin = plugin_manager.get_plugin("github")
-        backend_callback = "http://localhost:8000/api/github/callback"
+        backend_callback = getattr(settings, "GITHUB_REDIRECT_URI", None) or "http://localhost:8000/api/marketplace/callback/github"
         credentials = await gh_plugin.exchange_code(code=code or "mock_code", redirect_uri=backend_callback, state=state)
         plugin_manager.connect_user_plugin(user_id=resolved_user_id, plugin_id="github", raw_credentials=credentials)
 

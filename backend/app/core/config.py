@@ -69,7 +69,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: Optional[str] = Field(default=None, description="Google OAuth 2.0 Client ID")
     GOOGLE_CLIENT_SECRET: Optional[str] = Field(default=None, description="Google OAuth 2.0 Client Secret")
     GOOGLE_REDIRECT_URI: str = Field(
-        default="http://localhost:8000/auth/google/callback",
+        default="http://localhost:8000/api/v1/auth/google/callback",
         description="Google OAuth 2.0 authorized redirect URI",
     )
 
